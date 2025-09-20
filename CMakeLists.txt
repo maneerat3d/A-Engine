@@ -22,7 +22,7 @@ add_executable(A-Engine src/main.cpp)
 # เพิ่ม Path ของ header ไฟล์ SDL2 เข้าไปในโปรเจกต์
 target_include_directories(A-Engine PRIVATE ${SDL2_INCLUDE_DIRS})
 # ทำการ Link ไฟล์ Library ของ SDL2 เข้ากับโปรแกรมของเรา
-target_link_libraries(A-Engine PRIVATE ${SDL2_LIBRARIES})
+target_link_libraries(A-Engine PRIVATE ${SDL2_LIBRARIES} opengl32)
 
 add_custom_command(
     TARGET A-Engine POST_BUILD
