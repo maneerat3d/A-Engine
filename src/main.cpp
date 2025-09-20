@@ -134,59 +134,77 @@ int main() {
     glUseProgram(shaderProgram); // ต้องสั่ง use program ก่อน ถึงจะหา location เจอ
     int modelLoc = glGetUniformLocation(shaderProgram, "model");
     int viewLoc = glGetUniformLocation(shaderProgram, "view");
-    int projectionLoc = glGetUniformLocation(shaderProgram, "projection");    
-
+    int projectionLoc = glGetUniformLocation(shaderProgram, "projection"); 
+    // บอก OpenGL ว่า uniform `ourTexture` ของเราจะใช้ Texture Unit 0
+    glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture"), 0);
+   
     // ลบ Shader object ทิ้งได้เลยเมื่อ Link เสร็จแล้ว
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+     // === เตรียมข้อมูล Vertex ของลูกบาศก์ (เพิ่ม Texture Coords) ===
+     //      ตำแหน่ง X, Y, Z,   TexCoord U, V
+     float vertices[] = {
+        // positions          // normals           // texture coords
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 
-    // === เตรียมข้อมูล Vertex ของลูกบาศก์ (เพิ่ม Texture Coords) ===
-    //      ตำแหน่ง X, Y, Z,   TexCoord U, V
-    float vertices[] = {
-        // ด้านหลัง
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        // ด้านหน้า
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f
-    };
-    // === สร้าง Index Buffer ===
-    // เราจะวาดแค่ 2 ด้านก่อนเพื่อความง่าย
-    unsigned int indices[] = {
-        0, 1, 2, 2, 3, 0, // ด้านหลัง
-        4, 5, 6, 6, 7, 4  // ด้านหน้า
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
      };
 
-    // === สร้าง Buffer บน GPU ===
-    unsigned int VBO, VAO, EBO;
-    // 1. สร้าง Vertex Array Object (VAO)
+    unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
-    // 2. สร้าง Vertex Buffer Object (VBO)
     glGenBuffers(1, &VBO);
-    // 3. สร้าง Element Buffer Object (EBO/IBO)
-    glGenBuffers(1, &EBO);
-    // 4. Bind VAO ก่อน เพื่อให้การตั้งค่าทั้งหมดถูกบันทึกไว้ใน VAO นี้
     glBindVertexArray(VAO);
-
-    // 5. Bind VBO และส่งข้อมูล vertices ของเราเข้าไป
+    
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // 6. Bind EBO และส่งข้อมูล indices ของเราเข้าไป
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // 7. บอก OpenGL ว่าจะอ่านข้อมูลใน VBO อย่างไร
-    // 7.1 Attribute ตำแหน่ง (location = 0)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0); // เปิดใช้งาน attribute ที่ 0
-    // 7.2 Attribute พิกัด UV (location = 1)
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    // 1. Position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // 2. Normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    // 3. Texture coord attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     // === สร้างและโหลด Texture ===
     unsigned int texture;
@@ -216,9 +234,7 @@ int main() {
     // คืนหน่วยความจำหลังโหลดเสร็จ
     stbi_image_free(data);
 
-    // บอก OpenGL ว่า uniform `ourTexture` ของเราจะใช้ Texture Unit 0
-    // ซึ่งเราไม่จำเป็นต้องเปลี่ยนเลยตลอดโปรแกรมนี้ จึงตั้งไว้นอกลูปได้
-    glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture"), 0);
+
     bool is_running = true;
     SDL_Event event;
 
@@ -231,6 +247,10 @@ int main() {
                 is_running = false;
             }
         }
+        // สร้างตำแหน่งกล้องขึ้นมา
+        glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
+        glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+        glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
         
         // - ล้างหน้าจอด้วยสีน้ำเงิน
         glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
@@ -241,21 +261,23 @@ int main() {
         // - สั่งวาดสามเหลี่ยม
         glUseProgram(shaderProgram);      // บอก GPU ว่าจะใช้ Shader Program ไหน        
 
-        // --- สร้างและส่ง Transformation Matrices (MVP) ---        
+        // --- ส่ง Uniforms ของแสงและมุมมอง ---
+        glUniform3f(glGetUniformLocation(shaderProgram, "lightPos"), 1.2f, 1.0f, 2.0f);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, &cameraPos[0]);
+        glUniform3f(glGetUniformLocation(shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
+    
 
-        // 1. Model Matrix: หมุนลูกบาศก์รอบแกนที่น่าสนใจขึ้น
+        // --- สร้างและส่ง Matrices (MVP) ---
+        // 1. Model Matrix
         glm::mat4 model = glm::mat4(1.0f);
         float time = (float)SDL_GetTicks() / 1000.0f;
         model = glm::rotate(model, time, glm::vec3(0.5f, 1.0f, 0.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
 
-        // 2. View Matrix: ตั้งกล้องถอยหลังจากจุดกำเนิด 3 หน่วย และมองไปที่จุดกำเนิด
-        glm::mat4 view = glm::lookAt(
-            glm::vec3(0.0, 0.0, 3.0), // ตำแหน่งกล้อง (Eye)
-            glm::vec3(0.0, 0.0, 0.0), // จุดที่มอง (Center)
-            glm::vec3(0.0, 1.0, 0.0)  // ทิศบน (Up)
-        );
+        // 2. View Matrix
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+
 
         // 3. Projection Matrix: สร้างเลนส์แบบ Perspective
         glm::mat4 projection = glm::perspective(
@@ -274,8 +296,8 @@ int main() {
         glActiveTexture(GL_TEXTURE0); // เปิดใช้งาน Texture Unit 0
         glBindTexture(GL_TEXTURE_2D, texture);
 
-        // - วาดสามเหลี่ยม, จำนวน 12 indices (2 ด้าน), ชนิดของ index คือ unsigned int
-        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+        // วาดลูกบาศก์ (36 vertices)
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         // - สลับ Buffer เพื่อแสดงผล
         
         SDL_GL_SwapWindow(window);
@@ -285,7 +307,6 @@ int main() {
     // คืนทรัพยากรทั้งหมด
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);    
-    glDeleteBuffers(1, &EBO);
     glDeleteProgram(shaderProgram);
 
     SDL_GL_DeleteContext(context);
