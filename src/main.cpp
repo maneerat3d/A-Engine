@@ -122,6 +122,9 @@ int main() {
     unsigned int fragmentShader = create_shader(fragSource.c_str(), GL_FRAGMENT_SHADER);
     unsigned int shaderProgram = create_shader_program(vertexShader, fragmentShader);
 
+    // === เปิดใช้งาน Depth Test ===
+    glEnable(GL_DEPTH_TEST);
+
     // --- ค้นหาตำแหน่งของ Uniforms ทั้งหมดหลังสร้าง Program (ทำครั้งเดียว) ---
     // การทำแบบนี้จะมีประสิทธิภาพกว่าการค้นหาในลูปทุกเฟรม
     glUseProgram(shaderProgram); // ต้องสั่ง use program ก่อน ถึงจะหา location เจอ
@@ -136,26 +139,46 @@ int main() {
     // === เตรียมข้อมูล Vertex ของสามเหลี่ยม ===
     //      ตำแหน่ง X, Y, Z
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // มุมล่างซ้าย
-         0.5f, -0.5f, 0.0f, // มุมล่างขวา
-         0.0f,  0.5f, 0.0f  // มุมบน
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f
     };
+    // === สร้าง Index Buffer ===
+    // นิยามสามเหลี่ยม 12 รูป (2 รูปต่อ 1 ด้าน) โดยใช้ index อ้างอิงถึง vertices ข้างบน
+    unsigned int indices[] = {
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4,
+        0, 4, 7, 7, 3, 0,
+        1, 5, 6, 6, 2, 1,
+        3, 7, 6, 6, 2, 3,
+        0, 4, 5, 5, 1, 0
+     };
 
     // === สร้าง Buffer บน GPU ===
-    unsigned int VBO, VAO;
+    unsigned int VBO, VAO, EBO;
     // 1. สร้าง Vertex Array Object (VAO)
     glGenVertexArrays(1, &VAO);
     // 2. สร้าง Vertex Buffer Object (VBO)
     glGenBuffers(1, &VBO);
-
-    // 3. Bind VAO ก่อน เพื่อให้การตั้งค่าทั้งหมดถูกบันทึกไว้ใน VAO นี้
+    // 3. สร้าง Element Buffer Object (EBO/IBO)
+    glGenBuffers(1, &EBO);
+    // 4. Bind VAO ก่อน เพื่อให้การตั้งค่าทั้งหมดถูกบันทึกไว้ใน VAO นี้
     glBindVertexArray(VAO);
 
-    // 4. Bind VBO และส่งข้อมูล vertices ของเราเข้าไป
+    // 5. Bind VBO และส่งข้อมูล vertices ของเราเข้าไป
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // 5. บอก OpenGL ว่าจะอ่านข้อมูลใน VBO อย่างไร (Vertex Attribute Pointer)
+    // 6. Bind EBO และส่งข้อมูล indices ของเราเข้าไป
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // 7. บอก OpenGL ว่าจะอ่านข้อมูลใน VBO อย่างไร (Vertex Attribute Pointer)
     // - location = 0 ตรงกับ `layout (location = 0)` ใน Vertex shader
     // - 3 คือขนาดของข้อมูล (vec3)
     // - GL_FLOAT คือชนิดข้อมูล
@@ -181,17 +204,18 @@ int main() {
         // - ล้างหน้าจอด้วยสีน้ำเงิน
         glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
         
-        glClear(GL_COLOR_BUFFER_BIT);
+        // - *** อย่าลืมล้าง Depth Buffer ด้วย! ***
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // - สั่งวาดสามเหลี่ยม
         glUseProgram(shaderProgram);      // บอก GPU ว่าจะใช้ Shader Program ไหน        
 
-        // --- สร้างและส่ง Transformation Matrices (MVP) ---
-        float time = (float)SDL_GetTicks() / 1000.0f;
+        // --- สร้างและส่ง Transformation Matrices (MVP) ---        
 
-        // 1. Model Matrix: หมุนสามเหลี่ยมรอบแกน Y
+        // 1. Model Matrix: หมุนลูกบาศก์รอบแกนที่น่าสนใจขึ้น
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, time, glm::vec3(0.0f, 1.0f, 0.0f));
+        float time = (float)SDL_GetTicks() / 1000.0f;
+        model = glm::rotate(model, time, glm::vec3(0.5f, 1.0f, 0.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
 
         // 2. View Matrix: ตั้งกล้องถอยหลังจากจุดกำเนิด 3 หน่วย และมองไปที่จุดกำเนิด
@@ -209,12 +233,14 @@ int main() {
             0.1f,                     // Near clipping plane
             100.0f                    // Far clipping plane
         );
-        
+
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
  
 
         glBindVertexArray(VAO);           
-        glDrawArrays(GL_TRIANGLES, 0, 3); // สั่งวาด! (โหมดสามเหลี่ยม, เริ่มที่ vertex 0, จำนวน 3 vertices)
+        // *** เปลี่ยนมาใช้ glDrawElements เพื่อวาดโดยอ้างอิงจาก Index Buffer ***
+        // - วาดสามเหลี่ยม, จำนวน 36 indices, ชนิดของ index คือ unsigned int
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         // - สลับ Buffer เพื่อแสดงผล
         
@@ -224,7 +250,8 @@ int main() {
 
     // คืนทรัพยากรทั้งหมด
     glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &VBO);    
+    glDeleteBuffers(1, &EBO);
     glDeleteProgram(shaderProgram);
 
     SDL_GL_DeleteContext(context);
