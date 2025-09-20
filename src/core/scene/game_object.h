@@ -2,17 +2,21 @@
 
 #include "transform.h"
 #include <string>
+#include <memory>
+
+// Forward declarations
+namespace AEngine {
+class Mesh;
+class Texture;
+}
 
 namespace AEngine {
 
 struct GameObject {
     Transform transform;
     std::string name;
-
-    // TODO: Phase 3 จะเปลี่ยนเป็นระบบ Component
-    // ข้อมูลสำหรับ Renderer จะ hardcode ไปก่อน
-    int modelId = 0;
-    int textureId = 0;
+    std::shared_ptr<Mesh> mesh;
+    std::shared_ptr<Texture> texture;
 };
 
 } // namespace AEngine

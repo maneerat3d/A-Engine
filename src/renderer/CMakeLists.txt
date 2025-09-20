@@ -1,4 +1,6 @@
 add_library(aengine_renderer
+    mesh.cpp
+    texture.cpp
     renderer.cpp
 )
 

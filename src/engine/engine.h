@@ -7,7 +7,8 @@ using SDL_GLContext = void*; // Forward declare GL Context
 // Forward declare Renderer เพื่อไม่ต้อง include renderer.h
 namespace AEngine {
 class Renderer;
-class Scene; 
+class Scene;
+class ResourceManager;
 }
 
 namespace AEngine {
@@ -30,6 +31,7 @@ private:
     bool m_is_running;
     Renderer* m_renderer; // Engine มี pointer ไปยัง Renderer
     Scene* m_scene;       // Engine เป็นเจ้าของ Scene
+    ResourceManager* m_resourceManager; // Engine เป็นเจ้าของ ResourceManager
 };
 
 } // namespace AEngine

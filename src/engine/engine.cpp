@@ -1,7 +1,9 @@
 #include "engine.h"
 #include "renderer.h"
 #include "scene/scene.h"
-
+#include "resource/resource_manager.h" // เพิ่ม resource manager
+#include "renderer/mesh.h" // เพิ่ม mesh และ texture
+#include "renderer/texture.h"
 #include <iostream>
 #include <SDL.h>
 #include <glad/glad.h>
@@ -21,6 +23,7 @@ Engine::Engine()
     , m_gl_context(nullptr)
     , m_is_running(false)
     , m_renderer(nullptr)
+    , m_resourceManager(nullptr)
     , m_scene(nullptr)
 {
 }
@@ -65,9 +68,62 @@ void Engine::init() {
         return;
     }
 
+    // สร้าง ResourceManager ก่อน
+    m_resourceManager = new ResourceManager();    
     // สร้างและ init renderer
     m_renderer = new Renderer();
     m_renderer->init(m_window);    
+
+    // === เตรียมข้อมูล Vertex ของลูกบาศก์ (ย้ายมาจาก renderer) ===
+    std::vector<float> cubeVertices = {
+        // positions          // normals           // texture coords
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
+    };
+
+    // สร้าง Mesh และ Texture ผ่าน ResourceManager
+    auto cubeMesh = m_resourceManager->load<Mesh>("builtin_cube", cubeVertices);
+    auto containerTex = m_resourceManager->load<Texture>("textures/container.jpg");
+
 
     // สร้างและตั้งค่า Scene
     m_scene = new Scene();
@@ -77,9 +133,13 @@ void Engine::init() {
 
     // สร้าง GameObject 2 ชิ้น
     auto& cube1 = m_scene->createGameObject("Cube 1");
+    cube1.mesh = cubeMesh;
+    cube1.texture = containerTex;    
     cube1.transform.position = {-1.0f, 0.0f, 0.0f};
 
     auto& cube2 = m_scene->createGameObject("Cube 2");
+    cube2.mesh = cubeMesh;
+    cube2.texture = containerTex;    
     cube2.transform.position = {1.0f, 0.0f, 0.0f};
     cube2.transform.scale = {0.5f, 0.5f, 0.5f};
 
@@ -116,6 +176,10 @@ void Engine::shutdown() {
         delete m_renderer;
         m_renderer = nullptr;
     }
+    if (m_resourceManager) {
+        delete m_resourceManager;
+        m_resourceManager = nullptr;
+    }    
     if (m_scene) {
         delete m_scene;
         m_scene = nullptr;

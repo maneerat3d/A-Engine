@@ -22,11 +22,8 @@ public:
 
 private:
     // Member variables ทั้งหมดที่เกี่ยวกับ OpenGL ถูกย้ายมาที่นี่
-    unsigned int m_shader_program;
-    unsigned int m_vao;
-    unsigned int m_vbo;
-    unsigned int m_texture;
 
+    unsigned int m_shader_program; // ยังเก็บ Shader program ไว้ก่อน
     int m_model_loc;
     int m_view_loc;
     int m_projection_loc;

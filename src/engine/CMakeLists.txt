@@ -6,6 +6,7 @@ add_library(aengine_engine
 target_include_directories(aengine_engine 
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/src/core      
         ${CMAKE_SOURCE_DIR}/external
         ${CMAKE_SOURCE_DIR}/external/SDL2/include  
