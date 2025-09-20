@@ -2,9 +2,14 @@
 
 // กำหนดตัวแปรสำหรับสีที่จะส่งออกไป
 out vec4 FragColor;
+// รับ TexCoord ที่ถูก Interpolate แล้วมาจาก Vertex Shader
+in vec2 TexCoord;
+
+// รับ Texture Sampler เข้ามาเป็น Uniform
+uniform sampler2D ourTexture;
 
 void main()
 {
-    // กลับไปใช้สีขาวทึบ
-    FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    // ดึงค่าสีจาก Texture ณ พิกัด TexCoord ปัจจุบัน
+    FragColor = texture(ourTexture, TexCoord);
 }
