@@ -43,8 +43,5 @@ void main()
 
     // --- รวมผลลัพธ์ ---
     vec3 result = (ambient + diffuse + specular) * texture(ourTexture, TexCoord).rgb;
-    //vec3 result = texture(ourTexture, TexCoord).rgb;
-    //vec3 result = (ambient + diffuse + specular);
-    //vec3 result = normalize(Normal);
     FragColor = vec4(result, 1.0);
 }
