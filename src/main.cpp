@@ -1,14 +1,66 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
 // ดึง Header ของ SDL เข้ามาใช้งาน
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
-#include <SDL_opengl.h> // ดึง Header สำหรับ OpenGL เข้ามา
+#include <glad/glad.h>
 
 // ฟังก์ชันสำหรับจัดการข้อผิดพลาดของ SDL
 void log_sdl_error(const char* msg) {
     std::cerr << msg << ": " << SDL_GetError() << std::endl;
 }
  
+// ฟังก์ชันสำหรับอ่านไฟล์ Shader ทั้งหมดมาเป็น string
+std::string read_shader_file(const char* path) {
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << path << std::endl;
+        return "";
+    }
+    std::stringstream stream;
+    stream << file.rdbuf();
+    file.close();
+    return stream.str();
+}
+
+// ฟังก์ชันสำหรับสร้างและ Compile Shader
+unsigned int create_shader(const char* source, GLenum type) {
+    unsigned int shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+
+    // ตรวจสอบ Error
+    int success;
+    char infoLog[512];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        std::cerr << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+    return shader;
+}
+
+// ฟังก์ชันสำหรับสร้าง Shader Program จาก Vertex และ Fragment shader
+unsigned int create_shader_program(unsigned int vertexShader, unsigned int fragmentShader) {
+    unsigned int program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+
+    // ตรวจสอบ Error
+    int success;
+    char infoLog[512];
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+    return program;
+}
+
 int main() {
     std::cout << "A-Engine is starting..." << std::endl;
 
@@ -20,8 +72,8 @@ int main() {
 
     // === ตั้งค่าเวอร์ชั่นของ OpenGL ที่เราต้องการ ===
     // เราจะใช้ OpenGL 3.3 ซึ่งเป็นเวอร์ชั่นที่ทันสมัยและรองรับได้กว้าง
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
     // ใช้ Core Profile คือไม่ใช้ฟังก์ชันเก่าๆ ของ OpenGL
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     // เปิดใช้งาน Double Buffering
@@ -44,7 +96,7 @@ int main() {
         return -1;
     }
 
-    // 3. สร้าง OpenGL Context จาก Window
+    // 3. สร้าง OpenGL Context
     SDL_GLContext context = SDL_GL_CreateContext(window);
     if (!context) {
         log_sdl_error("Failed to create OpenGL context");
@@ -52,6 +104,54 @@ int main() {
         SDL_Quit();
         return -1;
     }
+
+    // 4. โหลดฟังก์ชันทั้งหมดของ OpenGL ด้วย GLAD
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    // === สร้าง Shaders ===
+    std::string vertSource = read_shader_file("shaders/simple.vert");
+    std::string fragSource = read_shader_file("shaders/simple.frag");
+    unsigned int vertexShader = create_shader(vertSource.c_str(), GL_VERTEX_SHADER);
+    unsigned int fragmentShader = create_shader(fragSource.c_str(), GL_FRAGMENT_SHADER);
+    unsigned int shaderProgram = create_shader_program(vertexShader, fragmentShader);
+    // ลบ Shader object ทิ้งได้เลยเมื่อ Link เสร็จแล้ว
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    // === เตรียมข้อมูล Vertex ของสามเหลี่ยม ===
+    //      ตำแหน่ง X, Y, Z
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f, // มุมล่างซ้าย
+         0.5f, -0.5f, 0.0f, // มุมล่างขวา
+         0.0f,  0.5f, 0.0f  // มุมบน
+    };
+
+    // === สร้าง Buffer บน GPU ===
+    unsigned int VBO, VAO;
+    // 1. สร้าง Vertex Array Object (VAO)
+    glGenVertexArrays(1, &VAO);
+    // 2. สร้าง Vertex Buffer Object (VBO)
+    glGenBuffers(1, &VBO);
+
+    // 3. Bind VAO ก่อน เพื่อให้การตั้งค่าทั้งหมดถูกบันทึกไว้ใน VAO นี้
+    glBindVertexArray(VAO);
+
+    // 4. Bind VBO และส่งข้อมูล vertices ของเราเข้าไป
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // 5. บอก OpenGL ว่าจะอ่านข้อมูลใน VBO อย่างไร (Vertex Attribute Pointer)
+    // - location = 0 ตรงกับ `layout (location = 0)` ใน Vertex shader
+    // - 3 คือขนาดของข้อมูล (vec3)
+    // - GL_FLOAT คือชนิดข้อมูล
+    // - GL_FALSE คือไม่ต้อง normalize
+    // - 3 * sizeof(float) คือ Stride หรือขนาดของ 1 vertex
+    // - (void*)0 คือ offset เริ่มต้น
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0); // เปิดใช้งาน attribute ที่ 0
 
     bool is_running = true;
     SDL_Event event;
@@ -65,19 +165,31 @@ int main() {
                 is_running = false;
             }
         }
-        // 2. Update (ยังไม่มี)
 
-        // 3. Render
-        // 3.1 ตั้งค่าสีที่จะใช้ล้างหน้าจอ (RGBA) - สีน้ำเงิน
+
+        // Render
+        // - ล้างหน้าจอด้วยสีน้ำเงิน
         glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
-        // 3.2 สั่งให้ GPU ล้างหน้าจอด้วยสีที่ตั้งไว้
+        
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // 3.3 สลับ Buffer (นำภาพที่วาดเสร็จแล้วใน Back Buffer ไปแสดงผล)
+        // - สั่งวาดสามเหลี่ยม
+        glUseProgram(shaderProgram);      // บอก GPU ว่าจะใช้ Shader Program ไหน
+        glBindVertexArray(VAO);           // บอก GPU ว่าจะใช้การตั้งค่า Vertex จาก VAO ไหน
+        glDrawArrays(GL_TRIANGLES, 0, 3); // สั่งวาด! (โหมดสามเหลี่ยม, เริ่มที่ vertex 0, จำนวน 3 vertices)
+
+        // - สลับ Buffer เพื่อแสดงผล
+        
         SDL_GL_SwapWindow(window);
     }
 
-    // 5. คืนทรัพยากรเมื่อจบโปรแกรม
+
+    // คืนทรัพยากรทั้งหมด
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteProgram(shaderProgram);
+
+    SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_Quit();
     std::cout << "A-Engine has shut down." << std::endl;
