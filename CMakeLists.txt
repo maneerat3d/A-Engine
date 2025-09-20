@@ -17,7 +17,7 @@ find_package(SDL2 REQUIRED)
 
 # เพิ่มไฟล์ source ของ GLAD เข้ามาในโปรเจกต์
 include_directories(external/glad/include)
-
+include_directories(external) 
 # --- สร้าง Target ---
 add_executable(A-Engine
     src/main.cpp

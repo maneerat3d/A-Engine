@@ -8,6 +8,10 @@
 #include <SDL.h>
 #include <glad/glad.h>
 
+// ดึง Header ของ GLM เข้ามาใช้งาน
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 // ฟังก์ชันสำหรับจัดการข้อผิดพลาดของ SDL
 void log_sdl_error(const char* msg) {
     std::cerr << msg << ": " << SDL_GetError() << std::endl;
@@ -176,17 +180,19 @@ int main() {
         // - สั่งวาดสามเหลี่ยม
         glUseProgram(shaderProgram);      // บอก GPU ว่าจะใช้ Shader Program ไหน        
 
-        // --- ส่งค่าสีแบบ Dynamic ไปให้ Uniform ---
-        // 1. คำนวณค่าสีใหม่โดยใช้เวลา
-        float timeValue = SDL_GetTicks() / 1000.0f; // เวลาในหน่วยวินาที
-        float greenValue = (sin(timeValue) / 2.0f) + 0.5f; // แกว่งค่าสีเขียวระหว่าง 0.0 - 1.0
+        // --- สร้างและส่ง Transformation Matrix ---
+        // 1. สร้าง Matrix เริ่มต้น (Identity Matrix)
+        glm::mat4 model = glm::mat4(1.0f);
+        // 2. คำนวณการหมุนตามเวลา รอบแกน Z (แกนที่พุ่งออกจากจอ)
+        model = glm::rotate(model, (float)SDL_GetTicks() / 1000.0f, glm::vec3(0.0f, 0.0f, 1.0f));
 
-        // 2. ค้นหาตำแหน่งของ uniform ที่ชื่อ "ourColor"
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        // 3. ตั้งค่า uniform ด้วยสีที่เราคำนวณ (R=0, G=greenValue, B=0.5, A=1.0)
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.5f, 1.0f);
+        // 3. ค้นหาตำแหน่งของ uniform ที่ชื่อ "model"
+        int modelLoc = glGetUniformLocation(shaderProgram, "model");
+        // 4. ส่งข้อมูล Matrix ของเราไปให้ Uniform
+        //    - glUniformMatrix4fv(location, count, transpose, value_ptr)
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
 
-        glBindVertexArray(VAO);           // บอก GPU ว่าจะใช้การตั้งค่า Vertex จาก VAO ไหน
+        glBindVertexArray(VAO);           
         glDrawArrays(GL_TRIANGLES, 0, 3); // สั่งวาด! (โหมดสามเหลี่ยม, เริ่มที่ vertex 0, จำนวน 3 vertices)
 
         // - สลับ Buffer เพื่อแสดงผล
