@@ -121,6 +121,14 @@ int main() {
     unsigned int vertexShader = create_shader(vertSource.c_str(), GL_VERTEX_SHADER);
     unsigned int fragmentShader = create_shader(fragSource.c_str(), GL_FRAGMENT_SHADER);
     unsigned int shaderProgram = create_shader_program(vertexShader, fragmentShader);
+
+    // --- ค้นหาตำแหน่งของ Uniforms ทั้งหมดหลังสร้าง Program (ทำครั้งเดียว) ---
+    // การทำแบบนี้จะมีประสิทธิภาพกว่าการค้นหาในลูปทุกเฟรม
+    glUseProgram(shaderProgram); // ต้องสั่ง use program ก่อน ถึงจะหา location เจอ
+    int modelLoc = glGetUniformLocation(shaderProgram, "model");
+    int viewLoc = glGetUniformLocation(shaderProgram, "view");
+    int projectionLoc = glGetUniformLocation(shaderProgram, "projection");    
+
     // ลบ Shader object ทิ้งได้เลยเมื่อ Link เสร็จแล้ว
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
@@ -169,8 +177,6 @@ int main() {
                 is_running = false;
             }
         }
-
-
         
         // - ล้างหน้าจอด้วยสีน้ำเงิน
         glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
@@ -180,17 +186,32 @@ int main() {
         // - สั่งวาดสามเหลี่ยม
         glUseProgram(shaderProgram);      // บอก GPU ว่าจะใช้ Shader Program ไหน        
 
-        // --- สร้างและส่ง Transformation Matrix ---
-        // 1. สร้าง Matrix เริ่มต้น (Identity Matrix)
-        glm::mat4 model = glm::mat4(1.0f);
-        // 2. คำนวณการหมุนตามเวลา รอบแกน Z (แกนที่พุ่งออกจากจอ)
-        model = glm::rotate(model, (float)SDL_GetTicks() / 1000.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+        // --- สร้างและส่ง Transformation Matrices (MVP) ---
+        float time = (float)SDL_GetTicks() / 1000.0f;
 
-        // 3. ค้นหาตำแหน่งของ uniform ที่ชื่อ "model"
-        int modelLoc = glGetUniformLocation(shaderProgram, "model");
-        // 4. ส่งข้อมูล Matrix ของเราไปให้ Uniform
-        //    - glUniformMatrix4fv(location, count, transpose, value_ptr)
+        // 1. Model Matrix: หมุนสามเหลี่ยมรอบแกน Y
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, time, glm::vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
+
+        // 2. View Matrix: ตั้งกล้องถอยหลังจากจุดกำเนิด 3 หน่วย และมองไปที่จุดกำเนิด
+        glm::mat4 view = glm::lookAt(
+            glm::vec3(0.0, 0.0, 3.0), // ตำแหน่งกล้อง (Eye)
+            glm::vec3(0.0, 0.0, 0.0), // จุดที่มอง (Center)
+            glm::vec3(0.0, 1.0, 0.0)  // ทิศบน (Up)
+        );
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+
+        // 3. Projection Matrix: สร้างเลนส์แบบ Perspective
+        glm::mat4 projection = glm::perspective(
+            glm::radians(45.0f),      // Field of View
+            1280.0f / 720.0f,         // Aspect Ratio
+            0.1f,                     // Near clipping plane
+            100.0f                    // Far clipping plane
+        );
+        
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
+ 
 
         glBindVertexArray(VAO);           
         glDrawArrays(GL_TRIANGLES, 0, 3); // สั่งวาด! (โหมดสามเหลี่ยม, เริ่มที่ vertex 0, จำนวน 3 vertices)
