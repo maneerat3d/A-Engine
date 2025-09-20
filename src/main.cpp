@@ -167,14 +167,25 @@ int main() {
         }
 
 
-        // Render
+        
         // - ล้างหน้าจอด้วยสีน้ำเงิน
         glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
         
         glClear(GL_COLOR_BUFFER_BIT);
 
         // - สั่งวาดสามเหลี่ยม
-        glUseProgram(shaderProgram);      // บอก GPU ว่าจะใช้ Shader Program ไหน
+        glUseProgram(shaderProgram);      // บอก GPU ว่าจะใช้ Shader Program ไหน        
+
+        // --- ส่งค่าสีแบบ Dynamic ไปให้ Uniform ---
+        // 1. คำนวณค่าสีใหม่โดยใช้เวลา
+        float timeValue = SDL_GetTicks() / 1000.0f; // เวลาในหน่วยวินาที
+        float greenValue = (sin(timeValue) / 2.0f) + 0.5f; // แกว่งค่าสีเขียวระหว่าง 0.0 - 1.0
+
+        // 2. ค้นหาตำแหน่งของ uniform ที่ชื่อ "ourColor"
+        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        // 3. ตั้งค่า uniform ด้วยสีที่เราคำนวณ (R=0, G=greenValue, B=0.5, A=1.0)
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.5f, 1.0f);
+
         glBindVertexArray(VAO);           // บอก GPU ว่าจะใช้การตั้งค่า Vertex จาก VAO ไหน
         glDrawArrays(GL_TRIANGLES, 0, 3); // สั่งวาด! (โหมดสามเหลี่ยม, เริ่มที่ vertex 0, จำนวน 3 vertices)
 

@@ -2,9 +2,10 @@
 
 // กำหนดตัวแปรสำหรับสีที่จะส่งออกไป
 out vec4 FragColor;
-
+// รับค่าสีเข้ามาทาง Uniform
+uniform vec4 ourColor;
 void main()
 {
-    // กำหนดให้ทุกพิกเซลเป็นสีขาวทึบ (RGBA)
-    FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    // ใช้สีที่ได้รับมาจาก Uniform
+    FragColor = ourColor;
 }
