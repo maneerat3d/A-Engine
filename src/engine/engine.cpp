@@ -1,8 +1,8 @@
 #include "engine.h"
 #include "renderer.h"
-// include ทุกอย่างที่จำเป็นที่นี่
-#include <iostream>
+#include "scene/scene.h"
 
+#include <iostream>
 #include <SDL.h>
 #include <glad/glad.h>
 
@@ -21,6 +21,7 @@ Engine::Engine()
     , m_gl_context(nullptr)
     , m_is_running(false)
     , m_renderer(nullptr)
+    , m_scene(nullptr)
 {
 }
 
@@ -68,6 +69,20 @@ void Engine::init() {
     m_renderer = new Renderer();
     m_renderer->init(m_window);    
 
+    // สร้างและตั้งค่า Scene
+    m_scene = new Scene();
+    m_scene->getCamera().setPerspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f);
+    m_scene->getCamera().setPosition({0.0f, 2.0f, 5.0f});
+    m_scene->getCamera().lookAt({0.0f, 0.0f, 0.0f});
+
+    // สร้าง GameObject 2 ชิ้น
+    auto& cube1 = m_scene->createGameObject("Cube 1");
+    cube1.transform.position = {-1.0f, 0.0f, 0.0f};
+
+    auto& cube2 = m_scene->createGameObject("Cube 2");
+    cube2.transform.position = {1.0f, 0.0f, 0.0f};
+    cube2.transform.scale = {0.5f, 0.5f, 0.5f};
+
     m_is_running = true;
 }
 
@@ -81,8 +96,14 @@ void Engine::gameLoop() {
                 m_is_running = false;
             }
         }
+        // อัปเดต GameObject (ตัวอย่างการทำให้หมุน)
+        float time = (float)SDL_GetTicks() / 1000.0f;
+        auto& gameObjects = const_cast<std::vector<AEngine::GameObject>&>(m_scene->getGameObjects());
+        gameObjects[0].transform.rotation = glm::angleAxis(time, glm::vec3(0.0f, 1.0f, 0.0f));
+        gameObjects[1].transform.rotation = glm::angleAxis(time * 0.5f, glm::vec3(0.5f, 1.0f, 0.0f));
+    
         // สั่งให้ Renderer วาด 1 frame
-        m_renderer->render();
+        m_renderer->render(*m_scene);
     }
 }
 
@@ -95,7 +116,11 @@ void Engine::shutdown() {
         delete m_renderer;
         m_renderer = nullptr;
     }
-
+    if (m_scene) {
+        delete m_scene;
+        m_scene = nullptr;
+    }
+    
     SDL_GL_DeleteContext(m_gl_context);
     SDL_DestroyWindow(m_window);
     SDL_Quit();

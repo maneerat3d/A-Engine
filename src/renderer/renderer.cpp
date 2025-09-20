@@ -1,5 +1,5 @@
 #include "renderer.h"
-
+#include "scene.h"
 // include ทุกอย่างที่จำเป็นสำหรับการเรนเดอร์
 #include <iostream>
 #include <fstream>
@@ -177,13 +177,16 @@ void Renderer::init(SDL_Window* window) {
     stbi_image_free(data);
 }
 
-void Renderer::render() {
-    glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
-    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-    glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+void Renderer::render(Scene& scene) {
 
-    glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+     glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
+     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+ 
+    // ใช้ Camera จาก Scene
+    Camera& camera = scene.getCamera();
+    const glm::mat4& view = camera.getViewMatrix();
+    const glm::mat4& projection = camera.getProjectionMatrix();
+    const glm::vec3& cameraPos = camera.getPosition();
 
     glUseProgram(m_shader_program);
 
@@ -192,26 +195,22 @@ void Renderer::render() {
     glUniform3fv(glGetUniformLocation(m_shader_program, "viewPos"), 1, &cameraPos[0]);
     glUniform3f(glGetUniformLocation(m_shader_program, "lightColor"), 1.0f, 1.0f, 1.0f);
 
-    // --- สร้างและส่ง Matrices (MVP) ---
-    glm::mat4 model = glm::mat4(1.0f);
-    float time = (float)SDL_GetTicks() / 1000.0f;
-    model = glm::rotate(model, time, glm::vec3(0.5f, 1.0f, 0.0f));
-    glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, &model[0][0]);
-
-    glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    // --- ส่ง View และ Projection Matrices (ครั้งเดียวต่อเฟรม) ---
     glUniformMatrix4fv(m_view_loc, 1, GL_FALSE, &view[0][0]);
-
-    glm::mat4 projection = glm::perspective(
-        glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f
-    );
     glUniformMatrix4fv(m_projection_loc, 1, GL_FALSE, &projection[0][0]);
-    
+
     // *** Bind Texture ก่อนวาด ***
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_texture);
     
     glBindVertexArray(m_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    // --- วนลูปวาด GameObject ทุกชิ้นใน Scene ---
+    for (const auto& go : scene.getGameObjects()) {
+        glm::mat4 model = go.transform.getMatrix();
+        glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, &model[0][0]);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 
     SDL_GL_SwapWindow(m_window);
 }
