@@ -4,6 +4,11 @@
 struct SDL_Window;
 using SDL_GLContext = void*; // Forward declare GL Context
 
+// Forward declare Renderer เพื่อไม่ต้อง include renderer.h
+namespace AEngine {
+class Renderer;
+}
+
 namespace AEngine {
 
 class Engine {
@@ -19,20 +24,10 @@ private:
     void shutdown();
 
     // Member variables สำหรับเก็บสถานะของ Engine
-    SDL_Window* m_window;
-    SDL_GLContext m_gl_context;
-     bool m_is_running;
- 
-    // Member variables สำหรับเก็บ OpenGL objects
-    unsigned int m_shader_program;
-    unsigned int m_vao;
-    unsigned int m_vbo;
-    unsigned int m_texture;
-
-    // Member variables สำหรับเก็บ location ของ uniform
-    int m_model_loc;
-    int m_view_loc;
-    int m_projection_loc;
+    SDL_Window* m_window; // Engine ยังคงเป็นเจ้าของ window
+    SDL_GLContext m_gl_context; // และ GL Context
+    bool m_is_running;
+    Renderer* m_renderer; // Engine มี pointer ไปยัง Renderer
 };
 
 } // namespace AEngine
