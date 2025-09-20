@@ -1,29 +1,51 @@
 #include <iostream>
-#include <chrono>   // สำหรับจัดการเรื่องเวลา
-#include <thread>   // สำหรับการหน่วงเวลา (sleep)
-
+// ดึง Header ของ SDL เข้ามาใช้งาน
+#define SDL_MAIN_HANDLED
+#include <SDL.h>
 
 int main() {
     std::cout << "A-Engine is starting..." << std::endl;
 
+    // 1. เริ่มต้นการทำงานของระบบ SDL (ในที่นี้คือระบบ Video)
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
+        return -1;
+    }
+    
+    // 2. สร้างหน้าต่าง
+    SDL_Window* window = SDL_CreateWindow(
+        "A-Engine",                 // Title ของหน้าต่าง
+        SDL_WINDOWPOS_CENTERED,     // ตำแหน่ง X (กึ่งกลาง)
+        SDL_WINDOWPOS_CENTERED,     // ตำแหน่ง Y (กึ่งกลาง)
+        1280,                       // ความกว้าง
+        720,                        // ความสูง
+        SDL_WINDOW_SHOWN            // Flag: ให้แสดงหน้าต่าง
+    );
+
+    if (!window) {
+        std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return -1;
+    }
+
     bool is_running = true;
-    int frame_count = 0;
+    SDL_Event event;
 
     // นี่คือ Game Loop ของเรา!
     while (is_running) {
-        std::cout << "--- Frame " << ++frame_count << " ---" << std::endl;
-
-        // 1. Process Input (จะเพิ่มโค้ดจริงในอนาคต)
-        std::cout << "Processing Input..." << std::endl;
-
-        // 2. Update (จะเพิ่มโค้ดจริงในอนาคต)
-        std::cout << "Updating Game State..." << std::endl;
-
-        // 3. Render (จะเพิ่มโค้ดจริงในอนาคต)
-        std::cout << "Rendering..." << std::endl;
-
-        // หน่วงเวลาเล็กน้อยเพื่อไม่ให้ Console ทำงานเร็วเกินไป
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        
+        // 1. จัดการ Input (Event Pumping)
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                is_running = false;
+            }
+        }
+        // 2. Update (ยังไม่มี)
+        // 3. Render (ยังไม่มี)
     }
+    // 4. คืนทรัพยากรเมื่อจบโปรแกรม
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    std::cout << "A-Engine has shut down." << std::endl;
     return 0;
 }
