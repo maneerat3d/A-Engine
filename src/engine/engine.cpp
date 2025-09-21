@@ -1,9 +1,15 @@
 #include "engine.h"
-#include "renderer.h"
 #include "scene/scene.h"
 #include "resource/resource_manager.h" // เพิ่ม resource manager
 #include "renderer/mesh.h" // เพิ่ม mesh และ texture
 #include "renderer/texture.h"
+#include "core/plugin/iplugin.h"
+#include "core/ecs/isystem.h"
+
+// --- Include Plugins ---
+#include "renderer/renderer_plugin.h"
+#include "game_plugin.h"
+
 #include <iostream>
 #include <SDL.h>
 #include <glad/glad.h>
@@ -22,8 +28,6 @@ Engine::Engine()
     : m_window(nullptr)  
     , m_gl_context(nullptr)
     , m_is_running(false)
-    , m_renderer(nullptr)
-    , m_resourceManager(nullptr)
     , m_scene(nullptr)
 {
 }
@@ -34,6 +38,7 @@ Engine::~Engine() {
 
 void Engine::run() {
     init();
+    loadPlugins();
     gameLoop();
     shutdown();
 }
@@ -70,10 +75,14 @@ void Engine::init() {
 
     // สร้าง ResourceManager ก่อน
     m_resourceManager = new ResourceManager();    
-    // สร้างและ init renderer
-    m_renderer = new Renderer();
-    m_renderer->init(m_window);    
+    // Scene creation is now simpler
+    m_scene = new Scene();
+    m_scene->getCamera().setPerspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f);
+    m_scene->getCamera().setPosition({0.0f, 2.0f, 5.0f});
+    m_scene->getCamera().lookAt({0.0f, 0.0f, 0.0f});
+}
 
+void Engine::loadPlugins() {
     // === เตรียมข้อมูล Vertex ของลูกบาศก์ (ย้ายมาจาก renderer) ===
     std::vector<float> cubeVertices = {
         // positions          // normals           // texture coords
@@ -120,70 +129,88 @@ void Engine::init() {
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
     };
 
-    // สร้าง Mesh และ Texture ผ่าน ResourceManager
+    // In a real scenario, scene loading would happen here.
+    // For now, we'll create entities and components right after loading plugins.
     auto cubeMesh = m_resourceManager->load<Mesh>("builtin_cube", cubeVertices);
     auto containerTex = m_resourceManager->load<Texture>("textures/container.jpg");
 
 
-    // สร้างและตั้งค่า Scene
-    m_scene = new Scene();
-    m_scene->getCamera().setPerspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f);
-    m_scene->getCamera().setPosition({0.0f, 2.0f, 5.0f});
-    m_scene->getCamera().lookAt({0.0f, 0.0f, 0.0f});
+    // Statically load plugins for now
+    m_plugins.push_back(new RendererPlugin());
+    m_plugins.push_back(new GamePlugin());
 
-    // สร้าง Entity 2 ตัว และแปะ Component ให้
+    for (auto* plugin : m_plugins) {
+        plugin->createSystems(*this);
+    }
+
+    for (auto* system : m_systems) {
+        system->init();
+    }
+    
+
+    // --- Create Entities (Example Scene Setup) ---
     Entity cube1 = m_scene->createEntity();
-    m_scene->addComponent<ECS::TransformComponent>(cube1, {
-        .position = {-1.5f, 0.0f, 0.0f},
-        .scale = {1.0f,1.0f,1.0f}    
-    });
-    m_scene->addComponent<ECS::RenderableComponent>(cube1, {cubeMesh, containerTex});
-    m_scene->addComponent<ECS::RotatingCubeComponent>(cube1, {.rotationSpeed = 1.0f});
- 
+    {
+        ECS::TransformComponent transform;
+        transform.position = {-1.5f, 0.0f, 0.0f};
+        m_scene->addComponent(cube1, transform);
+
+        m_scene->addComponent<ECS::RenderableComponent>(cube1, {cubeMesh, containerTex});
+        m_scene->addComponent<ECS::RotatingCubeComponent>(cube1, {1.0f});
+    }
+
     Entity cube2 = m_scene->createEntity();
-    m_scene->addComponent<ECS::TransformComponent>(cube2, {
-        .position = {1.5f, 0.0f, 0.0f},
-        .scale = {0.5f, 0.5f, 0.5f}
-    });
-    m_scene->addComponent<ECS::RenderableComponent>(cube2, {cubeMesh, containerTex});
-    // Cube 2 ไม่มี RotatingCubeComponent ดังนั้นมันจะไม่หมุน
+    {
+        ECS::TransformComponent transform;
+        transform.position = {1.5f, 0.0f, 0.0f};
+        transform.scale = {0.5f, 0.5f, 0.5f};
+        m_scene->addComponent(cube2, transform);
+
+        m_scene->addComponent<ECS::RenderableComponent>(cube2, {cubeMesh, containerTex});
+        // Cube 2 doesn't have a RotatingCubeComponent, so it won't rotate
+    }
 
     m_is_running = true;
 }
 
 void Engine::gameLoop() {
 
+    uint32_t last_tick = SDL_GetTicks();
 
     while (m_is_running) {
+        uint32_t current_tick = SDL_GetTicks();
+        float dt = (current_tick - last_tick) / 1000.0f;
+        last_tick = current_tick;
+        
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 m_is_running = false;
             }
         }
-        // --- System Update ---
-        // นี่คือส่วนของ "Rotating Cube System" แบบง่ายๆ
-        float time = (float)SDL_GetTicks() / 1000.0f;
-        // ในอนาคต Logic ส่วนนี้จะย้ายไปอยู่ในคลาส System ของตัวเอง
-        for (Entity i = 1; i < m_scene->getEntityCount(); ++i) {
-            // NOTE: This is inefficient. A real system would iterate only on entities that have this component.
-            auto& rot_comp = m_scene->getComponent<ECS::RotatingCubeComponent>(i); // This will access default-constructed components for entities that don't have one
-            m_scene->getComponent<ECS::TransformComponent>(i).rotation = glm::angleAxis(time * rot_comp.rotationSpeed, glm::vec3(0.5f, 1.0f, 0.0f));
-        }    
-        // สั่งให้ Renderer วาด 1 frame
-        m_renderer->render(*m_scene);
+        // --- Update all registered systems ---
+        for (auto* system : m_systems) {
+            system->update(*m_scene, dt);
+        }
     }
 }
 
 void Engine::shutdown() {
     std::cout << "A-Engine is shutting down." << std::endl;
 
-    // สั่งให้ renderer คืนทรัพยากร และลบ instance ทิ้ง
-    if (m_renderer) {
-        m_renderer->shutdown();
-        delete m_renderer;
-        m_renderer = nullptr;
+    for (auto* system : m_systems) {
+        system->shutdown();
+        delete system;
     }
+    m_systems.clear();
+
+    for (auto* plugin : m_plugins) {
+        plugin->destroySystems(*this);
+        delete plugin;
+     }
+
+    m_plugins.clear();
+
     if (m_resourceManager) {
         delete m_resourceManager;
         m_resourceManager = nullptr;

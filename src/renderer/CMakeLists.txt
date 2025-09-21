@@ -2,19 +2,20 @@ add_library(aengine_renderer
     mesh.cpp
     texture.cpp
     renderer.cpp
+    renderer.h
+    render_system.cpp
+    renderer_plugin.cpp    
 )
 
 target_include_directories(aengine_renderer
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# บอกว่า renderer ต้อง include header จาก core module ได้
-target_include_directories(aengine_renderer PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
-
 
 # บอกว่า renderer ต้อง include header จากที่ไหนบ้าง
 target_include_directories(aengine_renderer PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/core
     ${CMAKE_SOURCE_DIR}/src/core/scene
     ${CMAKE_SOURCE_DIR}/external

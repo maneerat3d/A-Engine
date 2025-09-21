@@ -1,6 +1,8 @@
 add_library(aengine_engine
     engine.cpp
-    engine.h    
+    engine.h
+    game_system.cpp
+    game_plugin.cpp 
 )
 
 target_include_directories(aengine_engine 

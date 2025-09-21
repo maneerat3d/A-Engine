@@ -3,6 +3,8 @@ add_library(aengine_core
     scene/camera.cpp
     scene/scene.cpp
     resource/resource_manager.cpp 
+    # Add new plugin/system interfaces here
+    # Note: These are headers, but since 'core' is a full library now, it's fine.
 )
 
 # บอกว่า core ต้อง include header จากที่ไหนบ้าง
