@@ -84,9 +84,9 @@ void Engine::init() {
 }
 
 void Engine::loadPlugins() {
-    // === เตรียมข้อมูล Vertex ของลูกบาศก์ (ย้ายมาจาก renderer) ===
 
-    auto containerTex = m_resourceManager->load<Texture>("textures/container.jpg");
+
+    //auto containerTex = m_resourceManager->load<Texture>("textures/container.jpg");
 
     // Load the model using our new importer
     auto loadedMeshes = GltfImporter::load("models/monkey.glb", *m_resourceManager);
@@ -112,7 +112,11 @@ void Engine::loadPlugins() {
             m_scene->addComponent(model1, transform);
 
             // Use the first mesh from the loaded model
-            m_scene->addComponent<ECS::RenderableComponent>(model1, {loadedMeshes[0], containerTex});
+            m_scene->addComponent<ECS::RenderableComponent>(
+                    model1, 
+                    {loadedMeshes[0],
+                    loadedMeshes[0]->getTexture()});
+
             m_scene->addComponent<ECS::RotatingCubeComponent>(model1, {1.0f});
         }
         Entity model2 = m_scene->createEntity();
@@ -122,7 +126,7 @@ void Engine::loadPlugins() {
             transform.scale = {0.5f, 0.5f, 0.5f};
             m_scene->addComponent(model2, transform);
 
-            m_scene->addComponent<ECS::RenderableComponent>(model2, {loadedMeshes[0], containerTex});
+            m_scene->addComponent<ECS::RenderableComponent>(model2, {loadedMeshes[0]});
         }
      }
      

@@ -124,8 +124,12 @@ void Renderer::render(Scene& scene) {
     // นี่คือ Logic ของ RenderSystem
     for (Entity i = 1; i < scene.getEntityCount(); ++i) {
         auto& renderable = scene.getComponent<ECS::RenderableComponent>(i);
-        if (renderable.mesh && renderable.texture) {
-            renderable.texture->bind();
+        if (renderable.mesh) {
+            auto texture = renderable.mesh->getTexture();
+            if (texture) {
+                texture->bind();
+            }
+            
             renderable.mesh->bind();
 
             auto& transform = scene.getComponent<ECS::TransformComponent>(i);

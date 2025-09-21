@@ -1,5 +1,8 @@
 #include "gltf_importer.h"
 #include "mesh.h"
+#include "texture.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
 #include "core/resource/resource_manager.h"
 #include <cgltf.h>
 #include <vector>
@@ -24,6 +27,12 @@ std::vector<std::shared_ptr<Mesh>> GltfImporter::load(const std::string& path, R
         std::cerr << "ERROR::GLTF_IMPORTER::COULD_NOT_LOAD_BUFFERS: " << path << std::endl;
         return {};
     }
+
+    // --- LOGGING START ---
+    std::cout << "GLTF_IMPORTER::INFO: Loading file: " << path << std::endl;
+    std::cout << "GLTF_IMPORTER::INFO: Found " << data->materials_count << " materials." << std::endl;
+    std::cout << "GLTF_IMPORTER::INFO: Found " << data->textures_count << " textures." << std::endl;
+    // --- LOGGING END ---
 
     std::vector<std::shared_ptr<Mesh>> meshes;
 
@@ -72,7 +81,37 @@ std::vector<std::shared_ptr<Mesh>> GltfImporter::load(const std::string& path, R
             
             if (!vertices.empty() && !indices.empty()) {
                 std::string mesh_path = path + "_" + std::to_string(i) + "_" + std::to_string(j);
-                meshes.push_back(resourceManager.load<Mesh>(mesh_path, vertices, indices));
+                auto new_mesh = resourceManager.load<Mesh>(mesh_path, vertices, indices);
+
+                const cgltf_material* material = primitive->material;
+                if (material && material->has_pbr_metallic_roughness) {
+                    // --- LOGGING START ---
+                    std::cout << "GLTF_IMPORTER::DEBUG: Processing material '" << (material->name ? material->name : "N/A") << "' for mesh " << i << ", primitive " << j << std::endl;
+                    // --- LOGGING END ---                    
+                    const cgltf_texture_view& base_color_texture = material->pbr_metallic_roughness.base_color_texture;
+                    if (base_color_texture.texture && base_color_texture.texture->image) {
+                        const char* uri = base_color_texture.texture->image->uri;
+                        if (uri && strlen(uri) > 0) {
+                            std::string base_path = path.substr(0, path.find_last_of("/\\") + 1);
+                            std::string texture_path = base_path + uri;
+                            std::cout << "GLTF_IMPORTER::DEBUG: Found texture URI, loading: " << texture_path << std::endl;
+                            new_mesh->setTexture(resourceManager.load<Texture>(texture_path));
+                            
+                         } else if (base_color_texture.texture->image->buffer_view) {
+                            // --- จัดการกับ Embedded Texture ---
+                            cgltf_buffer_view* buffer_view = base_color_texture.texture->image->buffer_view;
+                            const unsigned char* buffer_data = static_cast<const unsigned char*>(buffer_view->buffer->data) + buffer_view->offset;
+                            cgltf_size buffer_size = buffer_view->size;
+
+                            std::cout << "GLTF_IMPORTER::DEBUG: Found embedded texture, decoding from memory." << std::endl;
+                            
+                            // สร้าง Path ที่ไม่ซ้ำกันสำหรับ Resource Manager
+                            std::string embedded_path = path + "_embedded_tex_" + std::to_string(i) + "_" + std::to_string(j);
+                            new_mesh->setTexture(resourceManager.load<Texture>(embedded_path, buffer_data, buffer_size));
+                        }
+                    }
+                }
+                meshes.push_back(new_mesh);
             }
         }
     }

@@ -7,6 +7,7 @@ namespace AEngine {
 class Texture : public Resource {
 public:
     Texture(ResourceManager& owner, const std::string& path);
+    Texture(ResourceManager& owner, const std::string& path, const unsigned char* data, size_t size);
     ~Texture();
 
     void bind(unsigned int slot = 0) const;

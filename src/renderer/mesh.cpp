@@ -1,5 +1,6 @@
 #include "mesh.h"
 #include <glad/include/glad/glad.h>
+#include "texture.h"
 
 namespace AEngine {
 
@@ -30,6 +31,19 @@ Mesh::Mesh(ResourceManager& owner, const std::string& path,
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
     glBindVertexArray(0);
+}
+
+
+void Mesh::setTexture(std::shared_ptr<Texture> texture) {
+    m_texture = texture;
+}
+
+std::shared_ptr<Texture> Mesh::getTexture() const {
+    return m_texture;
+}
+
+unsigned int Mesh::getIndexCount() const {
+    return m_indexCount;
 }
 
 Mesh::~Mesh() {
