@@ -1,5 +1,5 @@
 #include "mesh.h"
-#include <glad/glad.h>
+#include <glad/include/glad/glad.h>
 
 namespace AEngine {
 

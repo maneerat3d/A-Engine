@@ -131,17 +131,22 @@ void Engine::init() {
     m_scene->getCamera().setPosition({0.0f, 2.0f, 5.0f});
     m_scene->getCamera().lookAt({0.0f, 0.0f, 0.0f});
 
-    // สร้าง GameObject 2 ชิ้น
-    auto& cube1 = m_scene->createGameObject("Cube 1");
-    cube1.mesh = cubeMesh;
-    cube1.texture = containerTex;    
-    cube1.transform.position = {-1.0f, 0.0f, 0.0f};
-
-    auto& cube2 = m_scene->createGameObject("Cube 2");
-    cube2.mesh = cubeMesh;
-    cube2.texture = containerTex;    
-    cube2.transform.position = {1.0f, 0.0f, 0.0f};
-    cube2.transform.scale = {0.5f, 0.5f, 0.5f};
+    // สร้าง Entity 2 ตัว และแปะ Component ให้
+    Entity cube1 = m_scene->createEntity();
+    m_scene->addComponent<ECS::TransformComponent>(cube1, {
+        .position = {-1.5f, 0.0f, 0.0f},
+        .scale = {1.0f,1.0f,1.0f}    
+    });
+    m_scene->addComponent<ECS::RenderableComponent>(cube1, {cubeMesh, containerTex});
+    m_scene->addComponent<ECS::RotatingCubeComponent>(cube1, {.rotationSpeed = 1.0f});
+ 
+    Entity cube2 = m_scene->createEntity();
+    m_scene->addComponent<ECS::TransformComponent>(cube2, {
+        .position = {1.5f, 0.0f, 0.0f},
+        .scale = {0.5f, 0.5f, 0.5f}
+    });
+    m_scene->addComponent<ECS::RenderableComponent>(cube2, {cubeMesh, containerTex});
+    // Cube 2 ไม่มี RotatingCubeComponent ดังนั้นมันจะไม่หมุน
 
     m_is_running = true;
 }
@@ -156,12 +161,15 @@ void Engine::gameLoop() {
                 m_is_running = false;
             }
         }
-        // อัปเดต GameObject (ตัวอย่างการทำให้หมุน)
+        // --- System Update ---
+        // นี่คือส่วนของ "Rotating Cube System" แบบง่ายๆ
         float time = (float)SDL_GetTicks() / 1000.0f;
-        auto& gameObjects = const_cast<std::vector<AEngine::GameObject>&>(m_scene->getGameObjects());
-        gameObjects[0].transform.rotation = glm::angleAxis(time, glm::vec3(0.0f, 1.0f, 0.0f));
-        gameObjects[1].transform.rotation = glm::angleAxis(time * 0.5f, glm::vec3(0.5f, 1.0f, 0.0f));
-    
+        // ในอนาคต Logic ส่วนนี้จะย้ายไปอยู่ในคลาส System ของตัวเอง
+        for (Entity i = 1; i < m_scene->getEntityCount(); ++i) {
+            // NOTE: This is inefficient. A real system would iterate only on entities that have this component.
+            auto& rot_comp = m_scene->getComponent<ECS::RotatingCubeComponent>(i); // This will access default-constructed components for entities that don't have one
+            m_scene->getComponent<ECS::TransformComponent>(i).rotation = glm::angleAxis(time * rot_comp.rotationSpeed, glm::vec3(0.5f, 1.0f, 0.0f));
+        }    
         // สั่งให้ Renderer วาด 1 frame
         m_renderer->render(*m_scene);
     }

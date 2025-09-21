@@ -2,8 +2,7 @@
 add_library(aengine_core
     scene/camera.cpp
     scene/scene.cpp
-    scene/scene.cpp
-    resource/resource_manager.cpp    
+    resource/resource_manager.cpp 
 )
 
 # บอกว่า core ต้อง include header จากที่ไหนบ้าง

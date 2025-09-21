@@ -121,14 +121,17 @@ void Renderer::render(Scene& scene) {
 
     
     // --- วนลูปวาด GameObject ทุกชิ้นใน Scene ---
-    for (const auto& go : scene.getGameObjects()) {
-        if (go.mesh && go.texture) {
-            go.texture->bind();
-            go.mesh->bind();
+    // นี่คือ Logic ของ RenderSystem
+    for (Entity i = 1; i < scene.getEntityCount(); ++i) {
+        auto& renderable = scene.getComponent<ECS::RenderableComponent>(i);
+        if (renderable.mesh && renderable.texture) {
+            renderable.texture->bind();
+            renderable.mesh->bind();
 
-            glm::mat4 model = go.transform.getMatrix();
+            auto& transform = scene.getComponent<ECS::TransformComponent>(i);
+            glm::mat4 model = transform.getMatrix();            
             glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, &model[0][0]);
-            glDrawArrays(GL_TRIANGLES, 0, go.mesh->getVertexCount());
+            glDrawArrays(GL_TRIANGLES, 0, renderable.mesh->getVertexCount());
         }
     }
 

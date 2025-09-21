@@ -19,8 +19,8 @@ target_include_directories(aengine_renderer PUBLIC
     ${CMAKE_SOURCE_DIR}/src/core/scene
     ${CMAKE_SOURCE_DIR}/external
     ${CMAKE_SOURCE_DIR}/external/glad/include
-    ${CMAKE_SOURCE_DIR}/external/glm
-    ${CMAKE_SOURCE_DIR}/external/stb
+    #${CMAKE_SOURCE_DIR}/external/glm
+    #${CMAKE_SOURCE_DIR}/external/stb
 )
 
 
@@ -28,6 +28,6 @@ target_link_libraries(aengine_renderer
     PRIVATE
         aengine_core
         SDL2::SDL2
-        OpenGL::GL
+        #OpenGL::GL
 )
 
