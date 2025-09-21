@@ -131,7 +131,7 @@ void Renderer::render(Scene& scene) {
             auto& transform = scene.getComponent<ECS::TransformComponent>(i);
             glm::mat4 model = transform.getMatrix();            
             glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, &model[0][0]);
-            glDrawArrays(GL_TRIANGLES, 0, renderable.mesh->getVertexCount());
+            glDrawElements(GL_TRIANGLES, renderable.mesh->getIndexCount(), GL_UNSIGNED_INT, 0);
         }
     }
 

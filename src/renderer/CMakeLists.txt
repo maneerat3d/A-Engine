@@ -2,7 +2,7 @@ add_library(aengine_renderer
     mesh.cpp
     texture.cpp
     renderer.cpp
-    renderer.h
+    gltf_importer.cpp    
     render_system.cpp
     renderer_plugin.cpp    
 )
@@ -30,5 +30,6 @@ target_link_libraries(aengine_renderer
         aengine_core
         SDL2::SDL2
         #OpenGL::GL
+        cgltf
 )
 

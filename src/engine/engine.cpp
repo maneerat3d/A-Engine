@@ -3,6 +3,7 @@
 #include "resource/resource_manager.h" // เพิ่ม resource manager
 #include "renderer/mesh.h" // เพิ่ม mesh และ texture
 #include "renderer/texture.h"
+#include "renderer/gltf_importer.h"
 #include "core/plugin/iplugin.h"
 #include "core/ecs/isystem.h"
 
@@ -84,56 +85,11 @@ void Engine::init() {
 
 void Engine::loadPlugins() {
     // === เตรียมข้อมูล Vertex ของลูกบาศก์ (ย้ายมาจาก renderer) ===
-    std::vector<float> cubeVertices = {
-        // positions          // normals           // texture coords
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-    };
-
-    // In a real scenario, scene loading would happen here.
-    // For now, we'll create entities and components right after loading plugins.
-    auto cubeMesh = m_resourceManager->load<Mesh>("builtin_cube", cubeVertices);
     auto containerTex = m_resourceManager->load<Texture>("textures/container.jpg");
 
+    // Load the model using our new importer
+    auto loadedMeshes = GltfImporter::load("models/monkey.glb", *m_resourceManager);
 
     // Statically load plugins for now
     m_plugins.push_back(new RendererPlugin());
@@ -147,29 +103,29 @@ void Engine::loadPlugins() {
         system->init();
     }
     
+    // --- Create Entities from the loaded model ---
+    if (!loadedMeshes.empty()) {
+        Entity model1 = m_scene->createEntity();
+        {
+            ECS::TransformComponent transform;
+            transform.position = {-1.5f, 0.0f, 0.0f};
+            m_scene->addComponent(model1, transform);
 
-    // --- Create Entities (Example Scene Setup) ---
-    Entity cube1 = m_scene->createEntity();
-    {
-        ECS::TransformComponent transform;
-        transform.position = {-1.5f, 0.0f, 0.0f};
-        m_scene->addComponent(cube1, transform);
+            // Use the first mesh from the loaded model
+            m_scene->addComponent<ECS::RenderableComponent>(model1, {loadedMeshes[0], containerTex});
+            m_scene->addComponent<ECS::RotatingCubeComponent>(model1, {1.0f});
+        }
+        Entity model2 = m_scene->createEntity();
+        {
+            ECS::TransformComponent transform;
+            transform.position = {1.5f, 0.0f, 0.0f};
+            transform.scale = {0.5f, 0.5f, 0.5f};
+            m_scene->addComponent(model2, transform);
 
-        m_scene->addComponent<ECS::RenderableComponent>(cube1, {cubeMesh, containerTex});
-        m_scene->addComponent<ECS::RotatingCubeComponent>(cube1, {1.0f});
-    }
-
-    Entity cube2 = m_scene->createEntity();
-    {
-        ECS::TransformComponent transform;
-        transform.position = {1.5f, 0.0f, 0.0f};
-        transform.scale = {0.5f, 0.5f, 0.5f};
-        m_scene->addComponent(cube2, transform);
-
-        m_scene->addComponent<ECS::RenderableComponent>(cube2, {cubeMesh, containerTex});
-        // Cube 2 doesn't have a RotatingCubeComponent, so it won't rotate
-    }
-
+            m_scene->addComponent<ECS::RenderableComponent>(model2, {loadedMeshes[0], containerTex});
+        }
+     }
+     
     m_is_running = true;
 }
 

@@ -39,3 +39,11 @@ add_custom_command(
         "${CMAKE_SOURCE_DIR}/textures"
         "$<TARGET_FILE_DIR:aengine_main>/textures"
 )
+
+add_custom_command(
+    TARGET aengine_main POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/models"
+        "$<TARGET_FILE_DIR:aengine_main>/models"
+    COMMENT "Copying models to output directory..."
+)

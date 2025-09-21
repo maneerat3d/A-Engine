@@ -6,19 +6,23 @@ namespace AEngine {
 
 class Mesh : public Resource {
 public:
-    // ตอนนี้เราจะสร้าง Mesh จาก vertex data โดยตรง
-    // ในอนาคตเราจะเปลี่ยนให้โหลดจากไฟล์ .obj หรือ .fbx
-    Mesh(ResourceManager& owner, const std::string& path, const std::vector<float>& vertices);
+    // Constructor ใหม่ที่รองรับทั้ง Vertices และ Indices
+    Mesh(ResourceManager& owner, const std::string& path, 
+         const std::vector<float>& vertices, 
+         const std::vector<unsigned int>& indices);
     ~Mesh();
     
     void bind() const;
     void unbind() const;
 
-    unsigned int getVertexCount() const { return m_vertexCount; }
+    // เราจะใช้จำนวน Index ในการวาดแทนจำนวน Vertex
+    unsigned int getIndexCount() const { return m_indexCount; }
 
 private:
-    unsigned int m_vao = 0, m_vbo = 0;
-    unsigned int m_vertexCount = 0;
+    unsigned int m_vao = 0;
+    unsigned int m_vbo = 0; // Vertex Buffer Object
+    unsigned int m_ebo = 0; // Element Buffer Object (for indices)
+    unsigned int m_indexCount = 0;
 };
 
 } // namespace AEngine
