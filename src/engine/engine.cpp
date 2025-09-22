@@ -123,6 +123,17 @@ void Engine::mainLoop() {
         for (const auto& subsystem : m_subsystems) {
             subsystem->update(dt);
         }
+        // --- Update all systems ---
+        WorldManager* worldManager = getSubsystem<WorldManager>();
+        if (worldManager) {
+            World* world = worldManager->getActiveWorld();
+            if (world) {
+                // วนลูปเพื่อเรียก update ของทุก System ที่ลงทะเบียนไว้
+                for (auto* system : m_systems) {
+                    system->update(*world, dt);
+                }
+            }
+        }
     }
 }
 
