@@ -6,6 +6,11 @@ class ResourceManager;
 
 class Resource {
 public:
+    enum class Type // <--- enum ต้องอยู่ข้างใน class
+    {
+        Texture,
+        Mesh,
+    };
     Resource(ResourceManager& owner, const std::string& path)
         : m_owner(owner), m_path(path) {}
     virtual ~Resource() = default;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "resource/resource.h"
+#include "core/resource/resource.h"
 
 namespace AEngine {
 

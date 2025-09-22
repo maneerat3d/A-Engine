@@ -1,16 +1,24 @@
 #pragma once
 
-#include <memory>
 #include <string>
+#include <vector>
 #include <unordered_map>
+#include <functional>
+#include <memory>
+#include "resource.h"
 
+// Forward declare
 namespace AEngine {
-class Resource; // Forward declaration
+    class IResourceImporter; 
+
 
 class ResourceManager {
 public:
     ResourceManager() = default;
     ~ResourceManager();
+
+    void registerImporter(const std::vector<std::string>& extensions, AEngine::IResourceImporter* importer);
+
 
     template <typename T, typename... Args>
     std::shared_ptr<T> load(const std::string& path, Args&&... args) {
@@ -24,7 +32,9 @@ public:
     }
 
 private:
-    std::unordered_map<std::string, std::shared_ptr<Resource>> m_resources;
+    std::unordered_map<std::string, std::shared_ptr<AEngine::Resource>> m_resources; // <--- เพิ่ม AEngine::
+
+    std::unordered_map<std::string, AEngine::IResourceImporter*> m_importers;
 };
 
 } // namespace AEngine

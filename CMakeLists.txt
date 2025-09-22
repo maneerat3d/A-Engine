@@ -1,6 +1,13 @@
-# ระบุเวอร์ชั่นและชื่อโปรเจกต์
+# ระบุเวอร์ชั่นและชื่อโปรเจกต์ A-Engine/CMakeLists.txt
 cmake_minimum_required(VERSION 3.16)
 project(A-Engine)
+
+# --- เพิ่มส่วนนี้เข้ามา ---
+# 1. สร้าง library ชื่อ 'glad' จากไฟล์ glad.c
+add_library(glad external/glad/src/glad.c)
+# 2. บอกว่าใครก็ตามที่ใช้ glad ต้อง include จากโฟลเดอร์นี้ด้วย
+target_include_directories(glad PUBLIC external/glad/include)
+# --- จบส่วนที่เพิ่ม ---
 
 # ตั้งค่า C++ Standard
 set(CMAKE_CXX_STANDARD 20)
@@ -22,4 +29,5 @@ add_subdirectory(external/cgltf)
 add_subdirectory(src/core)
 add_subdirectory(src/renderer)
 add_subdirectory(src/engine)
+add_subdirectory(src/plugins) 
 add_subdirectory(src/main)

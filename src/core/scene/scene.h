@@ -1,8 +1,8 @@
 #pragma once
 
 #include "camera.h"
-#include "ecs/ecs.h"
-#include "ecs/components.h"
+#include "core/ecs/ecs.h"
+#include "core/ecs/components.h"
 #include <array>
 
 namespace AEngine {

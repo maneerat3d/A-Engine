@@ -1,24 +1,30 @@
 #include "gltf_importer.h"
-#include "mesh.h"
-#include "texture.h"
+#include "src/renderer/mesh.h"
+#include "src/renderer/texture.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
-#include "core/resource/resource_manager.h"
+#include "src/core/resource/resource_manager.h"
+#define CGLTF_IMPLEMENTATION
 #include <cgltf.h>
 #include <vector>
+
 #include <iostream>
 #include <stdexcept>
 
 namespace AEngine {
 
-std::vector<std::shared_ptr<Mesh>> GltfImporter::load(const std::string& path, ResourceManager& resourceManager) {
+GltfImporter::GltfImporter(ResourceManager& resourceManager)
+    : m_resourceManager(resourceManager) {}
+
+bool GltfImporter::load(const std::string& path, ResourceManager& resourceManager)
+{
     cgltf_options options = {};
     cgltf_data* data = NULL;
     cgltf_result result = cgltf_parse_file(&options, path.c_str(), &data);
 
     if (result != cgltf_result_success) {
         std::cerr << "ERROR::GLTF_IMPORTER::COULD_NOT_LOAD: " << path << std::endl;
-        return {};
+        return false;
     }
 
     result = cgltf_load_buffers(&options, data, path.c_str());
@@ -115,9 +121,9 @@ std::vector<std::shared_ptr<Mesh>> GltfImporter::load(const std::string& path, R
             }
         }
     }
-
+    std::cout << "GltfImporter: Successfully loaded " << path << std::endl;
     cgltf_free(data);
-    return meshes;
+    return true;
 }
 
 } // namespace AEngine

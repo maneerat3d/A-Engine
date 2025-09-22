@@ -1,14 +1,12 @@
 #include "engine.h"
-#include "scene/scene.h"
-#include "resource/resource_manager.h" // เพิ่ม resource manager
-#include "renderer/mesh.h" // เพิ่ม mesh และ texture
-#include "renderer/texture.h"
-#include "renderer/gltf_importer.h"
 #include "core/plugin/iplugin.h"
 #include "core/ecs/isystem.h"
+#include "core/scene/scene.h"
+#include "core/resource/resource_manager.h" // Engine ยังคงต้องรู้จัก ResourceManager เพื่อส่งต่อให้ Plugin
 
-// --- Include Plugins ---
+// --- Include แค่ตัว Plugin ไม่ใช่รายละเอียดข้างใน ---
 #include "renderer/renderer_plugin.h"
+#include "plugins/gltf_importer/gltf_importer_plugin.h" // เพิ่ม include นี้
 #include "game_plugin.h"
 
 #include <iostream>
@@ -45,96 +43,73 @@ void Engine::run() {
 }
 
 void Engine::init() {
-    std::cout << "A-Engine is initializing..." << std::endl;
-    
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        log_sdl_error("SDL could not initialize!");
-        return;
-    }
-    
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+   std::cout << "A-Engine is initializing..." << std::endl;
 
-    m_window = SDL_CreateWindow("A-Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
-    if (!m_window) {
-        log_sdl_error("Window could not be created!");
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        log_sdl_error("SDL_Init");
         return;
     }
-    
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+
+    m_window = SDL_CreateWindow("A-Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_OPENGL);
+    if (!m_window) {
+        log_sdl_error("SDL_CreateWindow");
+        SDL_Quit();
+        return;
+    }
+
     m_gl_context = SDL_GL_CreateContext(m_window);
     if (!m_gl_context) {
-        log_sdl_error("OpenGL context could not be created!");
-        return;
-    }
-    
-    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
+        log_sdl_error("SDL_GL_CreateContext");
+        SDL_DestroyWindow(m_window);
+        SDL_Quit();
         return;
     }
 
-    // สร้าง ResourceManager ก่อน
-    m_resourceManager = new ResourceManager();    
-    // Scene creation is now simpler
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD" << std::endl;
+        SDL_GL_DeleteContext(m_gl_context);
+        SDL_DestroyWindow(m_window);
+        SDL_Quit();
+        return;
+    }
+
+    // สร้าง Scene และ ResourceManager ที่นี่
     m_scene = new Scene();
+    m_resourceManager = new ResourceManager();
+
     m_scene->getCamera().setPerspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f);
     m_scene->getCamera().setPosition({0.0f, 2.0f, 5.0f});
     m_scene->getCamera().lookAt({0.0f, 0.0f, 0.0f});
 }
 
 void Engine::loadPlugins() {
+    std::cout << "Loading plugins..." << std::endl;
 
-
-    //auto containerTex = m_resourceManager->load<Texture>("textures/container.jpg");
-
-    // Load the model using our new importer
-    auto loadedMeshes = GltfImporter::load("models/monkey.glb", *m_resourceManager);
-
-    // Statically load plugins for now
-    m_plugins.push_back(new RendererPlugin());
-    m_plugins.push_back(new GamePlugin());
-
-    for (auto* plugin : m_plugins) {
-        plugin->createSystems(*this);
-    }
-
-    for (auto* system : m_systems) {
-        system->init();
-    }
+    // --- Renderer Plugin ---
+    m_plugins.push_back(new RendererPlugin(*this));
+    // --- Game Plugin ---
+    m_plugins.push_back(new GamePlugin(*this));
+    // --- GLTF Importer Plugin ---
+    m_plugins.push_back(new GltfImporterPlugin(*this));
     
-    // --- Create Entities from the loaded model ---
-    if (!loadedMeshes.empty()) {
-        Entity model1 = m_scene->createEntity();
-        {
-            ECS::TransformComponent transform;
-            transform.position = {-1.5f, 0.0f, 0.0f};
-            m_scene->addComponent(model1, transform);
+    std::cout << "--- All plugins constructed. Now calling createSystems... ---" << std::endl; // <-- ปักธงที่ 1
+    // Create all plugins (which also registers systems and importers)
+    for (auto* plugin : m_plugins) {
+        std::cout << "Calling createSystems for plugin: " << plugin->getName() << std::endl; // <-- ปักธงที่ 2
+        plugin->createSystems(*this); 
+        std::cout << "Finished createSystems for plugin: " << plugin->getName() << std::endl; // <-- ปักธงที่ 3
+    }
 
-            // Use the first mesh from the loaded model
-            m_scene->addComponent<ECS::RenderableComponent>(
-                    model1, 
-                    {loadedMeshes[0],
-                    loadedMeshes[0]->getTexture()});
-
-            m_scene->addComponent<ECS::RotatingCubeComponent>(model1, {1.0f});
-        }
-        Entity model2 = m_scene->createEntity();
-        {
-            ECS::TransformComponent transform;
-            transform.position = {1.5f, 0.0f, 0.0f};
-            transform.scale = {0.5f, 0.5f, 0.5f};
-            m_scene->addComponent(model2, transform);
-
-            m_scene->addComponent<ECS::RenderableComponent>(model2, {loadedMeshes[0]});
-        }
-     }
-     
-    m_is_running = true;
+    std::cout << "--- Finished loading all plugins. ---" << std::endl; // <-- ปักธงที่ 4
 }
 
 void Engine::gameLoop() {
-
+    std::cout << "--- ENTERING GAME LOOP ---" << std::endl; // <-- ปักธงที่ 5
     uint32_t last_tick = SDL_GetTicks();
 
     while (m_is_running) {

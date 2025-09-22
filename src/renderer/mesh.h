@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/resource/resource.h"
 #include <vector>
 #include <memory>
+#include "core/resource/resource.h"
 
 namespace AEngine {
 
