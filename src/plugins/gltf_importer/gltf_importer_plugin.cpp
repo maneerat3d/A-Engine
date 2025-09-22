@@ -13,27 +13,17 @@ namespace AEngine {
 
     GltfImporterPlugin::~GltfImporterPlugin() {}
 
-    void GltfImporterPlugin::create() {
+    void GltfImporterPlugin::createSystems(Engine& engine) {
          std::cout << "GltfImporterPlugin CREATED and registering importer..." << std::endl;
-
         // สร้าง Importer ของเรา
-         auto gltf_importer = std::make_unique<GltfImporter>(*m_engine.getResourceManager());
-
+        auto gltf_importer = std::make_unique<GltfImporter>(*engine.getResourceManager());
         // ลงทะเบียน Importer กับ ResourceManager
-        ResourceManager& manager = *m_engine.getResourceManager(); // Dereference อีกครั้ง
+        ResourceManager& manager = *engine.getResourceManager();
         manager.registerImporter({".gltf", ".glb"}, gltf_importer.get());
 
         // เก็บ Importer ไว้เพื่อจัดการ lifetime
         m_importer.push_back(std::move(gltf_importer));
     }
-
-    void GltfImporterPlugin::destroy() {
-        std::cout << "GltfImporterPlugin DESTROYED" << std::endl;
-        
-        // ควรจะ unregister ด้วย แต่ตอนนี้เอาแค่ clear memory ก่อน
-        m_importer.clear();
-    }
-
  
 
     // ฟังก์ชันนี้สำคัญมาก! Engine จะเรียกใช้เพื่อสร้าง Plugin ของเรา

@@ -16,13 +16,9 @@ namespace AEngine {
         const char* getName() const override { return "gltf_importer"; }
 
         // GltfImporterPlugin ไม่ได้สร้าง System ของตัวเอง เลยใส่เป็นฟังก์ชันว่างๆ ไว้
-        void createSystems(Engine& engine) override { /* ทำตามสัญญา แต่ไม่ต้องทำอะไร */ }
+        void createSystems(Engine& engine) override;
         void destroySystems(Engine& engine) override { /* ทำตามสัญญา แต่ไม่ต้องทำอะไร */ }
         
-        // เราจะสร้างฟังก์ชัน create และ destroy ของตัวเองขึ้นมาใหม่ โดยไม่ใช้ override
-        // เพราะมันเป็นฟังก์ชันเฉพาะของ Plugin นี้ ไม่ได้มาจาก Interface
-        void create();
-        void destroy();
         
     private:
         Engine& m_engine;

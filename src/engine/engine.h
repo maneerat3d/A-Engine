@@ -42,7 +42,8 @@ private:
 public:
     // Public getters for plugins to access necessary resources
     SDL_Window* getWindow() { return m_window; }
-    ResourceManager* getResourceManager() { return m_resourceManager; }
+    Scene* getScene() { return m_scene; } // <-- เพิ่มบรรทัดนี้
+    ResourceManager* getResourceManager() { return m_resourceManager; } 
     void addSystem(ISystem* system) { m_systems.push_back(system); }    
 };
 

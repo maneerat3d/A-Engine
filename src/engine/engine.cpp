@@ -111,6 +111,12 @@ void Engine::loadPlugins() {
         std::cout << "Finished createSystems for plugin: " << plugin->getName() << std::endl; // <-- ปักธงที่ 3
     }
 
+    // CRITICAL: เพิ่มส่วนที่ขาดหายไปกลับเข้ามา!
+    std::cout << "--- Initializing all systems... ---" << std::endl;
+    for (auto* system : m_systems) {
+        system->init();
+    }
+
     std::cout << "--- Finished loading all plugins. ---" << std::endl; // <-- ปักธงที่ 4
     m_is_running = true;
 }
@@ -138,8 +144,9 @@ void Engine::gameLoop() {
         for (auto* system : m_systems) {
             system->update(*m_scene, dt);
         }
-        std::cout << "SDL_GL_SwapWindow" << std::endl;
-        SDL_GL_SwapWindow(m_window);
+        // การ Swap Window ควรเป็นหน้าที่ของ RenderSystem ไม่ใช่ Engine
+        // แต่จากโค้ดเดิม RenderSystem ไม่ได้ทำ ดังนั้นเราต้องย้าย SDL_GL_SwapWindow() ไปไว้ใน renderer.cpp
+        // หรือปล่อยไว้ที่นี่ก่อนเพื่อแก้ปัญหาเฉพาะหน้า (ซึ่งโค้ด error ของคุณทำไว้ที่นี่แล้ว)
     }
 }
 
