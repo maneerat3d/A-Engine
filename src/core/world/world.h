@@ -1,16 +1,19 @@
 #pragma once
-
-#include "camera.h"
+// -- PHASE 1: Decoupling the Core Engine --
+// Step 1.3: Elevate ResourceManager and World
+// เปลี่ยนชื่อ Scene เป็น World เพื่อให้สื่อความหมายว่าเป็น Container ของทุกสิ่งในเกม
+// โครงสร้างภายในยังเหมือนเดิม แต่จะถูกจัดการโดย WorldManager แทนที่จะเป็น Engine โดยตรง
+#include "core/scene/camera.h"
 #include "core/ecs/ecs.h"
 #include "core/ecs/components.h"
 #include <array>
 
 namespace AEngine {
 
-class Scene {
+class World { 
 public:
-    Scene();
-    ~Scene();
+    World();
+    ~World();
 
     Entity createEntity();
 
@@ -45,17 +48,17 @@ private:
 // 2. ทำ Template Specialization นอกคลาส แต่ยังอยู่ในไฟล์ .h (เพื่อให้ inline ได้)
 //    โดยอ้างอิงว่าเป็น member ของ Scene (Scene::) อย่างถูกต้อง
 template<>
-inline std::array<ECS::TransformComponent, 1024>& Scene::getComponentArray<ECS::TransformComponent>() {
+inline std::array<ECS::TransformComponent, 1024>& World::getComponentArray<ECS::TransformComponent>() {
     return m_transformComponents;
 }
 
 template<>
-inline std::array<ECS::RenderableComponent, 1024>& Scene::getComponentArray<ECS::RenderableComponent>() {
+inline std::array<ECS::RenderableComponent, 1024>& World::getComponentArray<ECS::RenderableComponent>() {
     return m_renderableComponents;
 }
 
 template<>
-inline std::array<ECS::RotatingCubeComponent, 1024>& Scene::getComponentArray<ECS::RotatingCubeComponent>() {
+inline std::array<ECS::RotatingCubeComponent, 1024>& World::getComponentArray<ECS::RotatingCubeComponent>() {
     return m_rotatingCubeComponents;
 }
 

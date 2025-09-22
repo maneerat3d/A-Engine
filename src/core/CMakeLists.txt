@@ -1,7 +1,8 @@
 # สร้าง Library สำหรับ Core Module A-Engine/src/core/CMakeLists.txt
 add_library(aengine_core
     scene/camera.cpp
-    scene/scene.cpp
+    world/world.cpp
+    world/world_manager.cpp
     resource/resource_manager.cpp
     plugin/iplugin.h
     # Add new plugin/system interfaces here

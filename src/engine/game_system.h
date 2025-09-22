@@ -9,7 +9,7 @@ public:
     ~GameSystem() = default;
 
     void init() override;
-    void update(Scene& scene, float dt) override;
+    void update(World& world, float dt) override;
     void shutdown() override;
 };
 

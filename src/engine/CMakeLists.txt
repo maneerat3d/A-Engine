@@ -3,7 +3,7 @@ add_library(aengine_engine
     engine.cpp
     engine.h
     game_system.cpp
-
+    ${CMAKE_SOURCE_DIR}/src/platform/platform_subsystem.cpp
 )
 
 # กำหนด include directories สำหรับ aengine_engine

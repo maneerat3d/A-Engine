@@ -1,5 +1,8 @@
 #pragma once
-
+// -- PHASE 1: Decoupling the Core Engine --
+// Step 1.3: Elevate ResourceManager and World
+// ปรับแก้ให้ ResourceManager เป็น Subsystem เต็มตัว
+#include "core/subsystem/isubsystem.h"
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -11,10 +14,16 @@
 namespace AEngine {
 
 
-class ResourceManager {
+class ResourceManager final : public ISubsystem { // <--- เพิ่มการสืบทอด
 public:
-    ResourceManager() = default;
+    ResourceManager(Engine& context); 
     ~ResourceManager();
+
+    // --- ISubsystem Implementation ---
+    bool init() override;
+    void update(float dt) override;
+    void shutdown() override;
+    // ---------------------------------
 
     void registerImporter(const std::vector<std::string>& extensions, AEngine::IResourceImporter* importer);
 

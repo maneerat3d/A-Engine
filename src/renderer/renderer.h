@@ -4,9 +4,7 @@
 struct SDL_Window;
 
 // Forward declare Scene เพื่อไม่ต้อง include scene.h
-namespace AEngine {
-class Scene;
-}
+namespace AEngine { class World; } 
 
 namespace AEngine {
 
@@ -17,7 +15,7 @@ public:
 
     // เราจะส่ง SDL_Window เข้ามาตอน init
     void init(SDL_Window* window);
-    void render(Scene& scene);
+    void render(World& world); 
     void shutdown();
 
 private:

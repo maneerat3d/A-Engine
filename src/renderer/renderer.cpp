@@ -1,5 +1,5 @@
 #include "renderer.h"
-#include "scene.h"
+#include "core/world/world.h"
 #include "mesh.h"
 #include "texture.h"
 // include ทุกอย่างที่จำเป็นสำหรับการเรนเดอร์
@@ -97,13 +97,13 @@ void Renderer::init(SDL_Window* window) {
     glUniform1i(glGetUniformLocation(m_shader_program, "ourTexture"), 0);
 }
 
-void Renderer::render(Scene& scene) {
+void Renderer::render(World& world) {
 
      glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
  
     // ใช้ Camera จาก Scene
-    Camera& camera = scene.getCamera();
+    Camera& camera = world.getCamera();
     const glm::mat4& view = camera.getViewMatrix();
     const glm::mat4& projection = camera.getProjectionMatrix();
     const glm::vec3& cameraPos = camera.getPosition();
@@ -122,8 +122,8 @@ void Renderer::render(Scene& scene) {
     
     // --- วนลูปวาด GameObject ทุกชิ้นใน Scene ---
     // นี่คือ Logic ของ RenderSystem
-    for (Entity i = 1; i < scene.getEntityCount(); ++i) {
-        auto& renderable = scene.getComponent<ECS::RenderableComponent>(i);
+    for (Entity i = 1; i < world.getEntityCount(); ++i) {
+        auto& renderable = world.getComponent<ECS::RenderableComponent>(i);
         if (renderable.mesh) {
             auto texture = renderable.mesh->getTexture();
             if (texture) {
@@ -132,14 +132,12 @@ void Renderer::render(Scene& scene) {
             
             renderable.mesh->bind();
 
-            auto& transform = scene.getComponent<ECS::TransformComponent>(i);
+            auto& transform = world.getComponent<ECS::TransformComponent>(i);
             glm::mat4 model = transform.getMatrix();            
             glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, &model[0][0]);
             glDrawElements(GL_TRIANGLES, renderable.mesh->getIndexCount(), GL_UNSIGNED_INT, 0);
         }
     }
-
-    SDL_GL_SwapWindow(m_window);
 }
 
 void Renderer::shutdown() {

@@ -10,7 +10,8 @@ RendererPlugin::RendererPlugin(Engine& engine) : m_engine(engine) {
 }
 
 void RendererPlugin::createSystems(Engine& engine) {
-    engine.addSystem(new RenderSystem(engine.getWindow()));
+    // ส่ง engine context เข้าไปให้ RenderSystem โดยตรง
+    engine.addSystem(new RenderSystem(engine));
 }
 
 void RendererPlugin::destroySystems(Engine& engine) {

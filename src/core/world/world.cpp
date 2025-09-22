@@ -1,14 +1,15 @@
-#include "scene.h"
+#pragma once
+#include "world.h"
 
 namespace AEngine {
 
-Scene::Scene() {
+World::World() {
 }
 
-Scene::~Scene() {
+World::~World() {
 }
 
-Entity Scene::createEntity() {
+Entity World::createEntity() {
     // ยังไม่มีระบบ re-use ID, แค่เพิ่มไปเรื่อยๆ ก่อน
     // และต้องแน่ใจว่าไม่เกินขนาด Array ที่จองไว้ (1024)
     if (m_entityCounter >= 1024) {
