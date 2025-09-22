@@ -13,8 +13,6 @@
 
 namespace AEngine {
 
-GltfImporter::GltfImporter(ResourceManager& resourceManager)
-    : m_resourceManager(resourceManager) {}
 
 bool GltfImporter::load(const std::string& path, ResourceManager& resourceManager)
 {
@@ -87,6 +85,9 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
             
             if (!vertices.empty() && !indices.empty()) {
                 std::string mesh_path = path + "_" + std::to_string(i) + "_" + std::to_string(j);
+    
+                // **การเปลี่ยนแปลงสำคัญ**: เราไม่ได้ใช้ m_resourceManager.load อีกต่อไป
+                // แต่เราเรียกใช้ `resourceManager` ที่ถูกส่งเข้ามาเพื่อ "สร้าง" Resource โดยตรง                  
                 auto new_mesh = resourceManager.load<Mesh>(mesh_path, vertices, indices);
 
                 const cgltf_material* material = primitive->material;

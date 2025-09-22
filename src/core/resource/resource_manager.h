@@ -41,9 +41,10 @@ public:
             std::string ext = path.substr(dot_pos);
 
             if (m_importers.count(ext)) {
-                // เจอนามสกุลไฟล์ใน Importer ที่ลงทะเบียนไว้
+                // **หัวใจของระบบ**: ถ้าเจอนามสกุลไฟล์ที่ลงทะเบียนไว้
                 IResourceImporter* importer = m_importers.at(ext);
                 if (importer->load(path, *this)) {
+                    // สั่งให้ importer โหลดไฟล์ ถ้าสำเร็จ...
                     // ถ้า Importer โหลดสำเร็จ มันควรจะสร้าง Resource ไว้ใน map แล้ว เราแค่ดึงมันออกมา
                     return std::static_pointer_cast<T>(m_resources[path]);
                 }

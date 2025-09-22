@@ -15,6 +15,7 @@ namespace AEngine {
     class ResourceManager;
 
     // Interface กลางสำหรับ Importer ทุกประเภท
+    // **หลักการ**: Interface นี้เปรียบเสมือน "สัญญา" ที่ Importer ทุกตัวต้องทำให้ได้
     class IResourceImporter {
     public:
         virtual ~IResourceImporter() = default;
@@ -26,7 +27,7 @@ namespace AEngine {
 
     class GltfImporter final : public IResourceImporter {
     public:
-        explicit GltfImporter(ResourceManager& resourceManager);
+        GltfImporter() = default; // ไม่ต้องการ ResourceManager ใน constructor อีกต่อไป
 
         bool load(const std::string& path, ResourceManager& resourceManager) override;
         
@@ -34,7 +35,7 @@ namespace AEngine {
         Resource::Type getResourceType() const override { return Resource::Type::Mesh; }
     
     private:
-        ResourceManager& m_resourceManager;
+        
     };
 
 } // namespace AEngine
