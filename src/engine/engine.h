@@ -23,7 +23,7 @@ public:
     void run();
 
 private:
-    void init();
+    bool init();
     void loadPlugins();
     void gameLoop();
     void shutdown();

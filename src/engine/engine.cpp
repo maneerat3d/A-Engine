@@ -36,18 +36,23 @@ Engine::~Engine() {
 }
 
 void Engine::run() {
-    init();
+    
+    if (!init()) {
+        std::cerr << "FATAL: Engine failed to initialize. Shutting down." << std::endl;
+        shutdown();
+        return;
+    }
     loadPlugins();
     gameLoop();
     shutdown();
 }
 
-void Engine::init() {
+bool Engine::init() {
    std::cout << "A-Engine is initializing..." << std::endl;
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         log_sdl_error("SDL_Init");
-        return;
+        return false;
     }
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -59,7 +64,7 @@ void Engine::init() {
     if (!m_window) {
         log_sdl_error("SDL_CreateWindow");
         SDL_Quit();
-        return;
+        return false;
     }
 
     m_gl_context = SDL_GL_CreateContext(m_window);
@@ -67,7 +72,7 @@ void Engine::init() {
         log_sdl_error("SDL_GL_CreateContext");
         SDL_DestroyWindow(m_window);
         SDL_Quit();
-        return;
+        return false;
     }
 
     if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
@@ -75,7 +80,7 @@ void Engine::init() {
         SDL_GL_DeleteContext(m_gl_context);
         SDL_DestroyWindow(m_window);
         SDL_Quit();
-        return;
+        return false;
     }
 
     // สร้าง Scene และ ResourceManager ที่นี่
@@ -85,6 +90,7 @@ void Engine::init() {
     m_scene->getCamera().setPerspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f);
     m_scene->getCamera().setPosition({0.0f, 2.0f, 5.0f});
     m_scene->getCamera().lookAt({0.0f, 0.0f, 0.0f});
+    return true;
 }
 
 void Engine::loadPlugins() {
@@ -106,6 +112,7 @@ void Engine::loadPlugins() {
     }
 
     std::cout << "--- Finished loading all plugins. ---" << std::endl; // <-- ปักธงที่ 4
+    m_is_running = true;
 }
 
 void Engine::gameLoop() {
