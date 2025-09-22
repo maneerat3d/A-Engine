@@ -98,10 +98,10 @@ void Engine::loadPlugins() {
 
     // --- Renderer Plugin ---
     m_plugins.push_back(new RendererPlugin(*this));
-    // --- Game Plugin ---
-    m_plugins.push_back(new GamePlugin(*this));
     // --- GLTF Importer Plugin ---
     m_plugins.push_back(new GltfImporterPlugin(*this));
+    // --- Game Plugin ---
+    m_plugins.push_back(new GamePlugin(*this));
     
     std::cout << "--- All plugins constructed. Now calling createSystems... ---" << std::endl; // <-- ปักธงที่ 1
     // Create all plugins (which also registers systems and importers)

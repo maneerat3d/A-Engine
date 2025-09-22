@@ -31,7 +31,7 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
     if (result != cgltf_result_success) {
         cgltf_free(data);
         std::cerr << "ERROR::GLTF_IMPORTER::COULD_NOT_LOAD_BUFFERS: " << path << std::endl;
-        return {};
+        return false;
     }
 
     // --- LOGGING START ---
@@ -121,7 +121,7 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
             }
         }
     }
-    
+
     // เพิ่ม Log ตรงนี้เพื่อดูจำนวน Mesh ที่ประมวลผล
     std::cout << "GltfImporter: Processed " << meshes.size() << " meshes from file: " << path << std::endl;
     cgltf_free(data);
