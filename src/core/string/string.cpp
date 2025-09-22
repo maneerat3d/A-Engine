@@ -8,6 +8,14 @@
 namespace AEngine
 {
 
+StringView::StringView(const char* str) 
+    : begin(str), end(str ? str + strlen(str) : nullptr) 
+{}
+
+StringView::StringView(const char* str, u32 len) 
+    : begin(str), end(str + len) 
+{}
+
 // ฟังก์ชันพื้นฐานที่คัดลอกมาจาก Lumix แต่ใช้ standard library
 char toLower(char c) {
 	return (char)tolower(c);

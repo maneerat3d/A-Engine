@@ -3,6 +3,7 @@
 #include "engine/engine.h"
 #include "platform/platform_subsystem.h"
 #include "core/world/world.h"
+#include "core/memory/core.h" // <--- เพิ่มบรรทัดนี้
 
 // -- PHASE 1 (ต่อ): แก้ไขการเชื่อมต่อของ RenderSystem --
 // - Constructor ถูกแก้ไขให้รับและเก็บ Engine context
@@ -20,7 +21,8 @@ RenderSystem::~RenderSystem() {
 }
 
 void RenderSystem::init() {
-    m_renderer = new Renderer();
+    // ใช้ Allocator ของ Engine ในการสร้าง Renderer
+    m_renderer = AENGINE_NEW(m_engine.getAllocator(), Renderer)();
 
     // ขอ Window จาก PlatformSubsystem ผ่าน Engine context
     PlatformSubsystem* platform = m_engine.getSubsystem<PlatformSubsystem>();
@@ -39,7 +41,8 @@ void RenderSystem::update(World& world, float dt) {
 void RenderSystem::shutdown() {
     if (m_renderer) {
         m_renderer->shutdown();
-        delete m_renderer;
+        // ใช้ Allocator ของ Engine ในการลบ Renderer
+        AENGINE_DELETE(m_engine.getAllocator(), m_renderer);
         m_renderer = nullptr;
     }
 }

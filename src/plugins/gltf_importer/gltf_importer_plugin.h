@@ -1,11 +1,11 @@
 #pragma once
 #include "core/plugin/iplugin.h"
-#include <memory>
-#include <vector>
 
 namespace AEngine {
     class Engine;
-    class IResourceImporter;
+    
+    // Forward declare แค่ struct ที่เป็น implementation ก็พอ
+    struct GltfImporterPluginImpl;
 
     class GltfImporterPlugin final : public IPlugin {
     public:
@@ -15,14 +15,12 @@ namespace AEngine {
         // --- IPlugin Interface (ฉบับแก้ไขให้ถูกต้อง) ---
         const char* getName() const override { return "gltf_importer"; }
 
-        // GltfImporterPlugin ไม่ได้สร้าง System ของตัวเอง เลยใส่เป็นฟังก์ชันว่างๆ ไว้
         void createSystems(Engine& engine) override;
         void destroySystems(Engine& engine) override { /* ทำตามสัญญา แต่ไม่ต้องทำอะไร */ }
         
-        
     private:
         Engine& m_engine;
-        std::vector<std::unique_ptr<IResourceImporter>> m_importer;
+        GltfImporterPluginImpl* m_pimpl; // เปลี่ยนเป็น Pointer
     };
 
 } // namespace AEngine

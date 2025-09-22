@@ -6,6 +6,7 @@
 #include "core/world/world.h"         // <--- ตัวใหม่
 #include "core/resource/resource_manager.h"
 #include "renderer/mesh.h"
+#include "core/memory/core.h" // <--- เพิ่มบรรทัดนี้
 #include <iostream>
 
 namespace AEngine {
@@ -19,8 +20,8 @@ GamePlugin::~GamePlugin() {
 }
 
 void GamePlugin::createSystems(Engine& engine) {
-    // 1. เพิ่ม GameSystem (ยังเหมือนเดิม)
-    engine.addSystem(new GameSystem());
+    // 1. เพิ่ม GameSystem โดยใช้ Allocator ของ Engine
+    engine.addSystem(AENGINE_NEW(engine.getAllocator(), GameSystem)());
 
     // 2. โหลดโมเดลและสร้าง Entities ผ่าน Subsystem
     WorldManager* worldManager = engine.getSubsystem<WorldManager>();

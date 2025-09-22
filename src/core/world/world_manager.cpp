@@ -1,22 +1,23 @@
 #pragma once
 #include "world_manager.h"
+#include "engine/engine.h"
 #include "world.h"
 #include <iostream>
 
 namespace AEngine {
 
 WorldManager::WorldManager(Engine& context)
-    : ISubsystem(context, "WorldManager"), m_active_world(nullptr)
+    : ISubsystem(context, "WorldManager") 
 {
+    // m_active_world จะถูก default-constructed เป็น null โดยอัตโนมัติ
 }
-
 WorldManager::~WorldManager()
 {
 }
 
 bool WorldManager::init() {
     std::cout << "WorldManager is initializing..." << std::endl;
-    m_active_world = std::make_unique<World>();
+    m_active_world = UniquePtr<World>::create(m_context.getAllocator());
     
     // ตั้งค่า Camera เริ่มต้น (ย้ายมาจาก Engine::init() เดิม)
     m_active_world->getCamera().setPerspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f);

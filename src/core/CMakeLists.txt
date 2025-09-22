@@ -3,6 +3,8 @@ add_library(aengine_core
     scene/camera.cpp    
     memory/default_allocator.cpp 
     string/string.cpp
+    hash/hash.cpp
+    subsystem/isubsystem.cpp
     world/world.cpp
     world/world_manager.cpp
     resource/resource_manager.cpp

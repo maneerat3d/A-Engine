@@ -82,19 +82,19 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
                     }
                 }
             }
-            
+
             if (!vertices.empty() && !indices.empty()) {
                 std::string mesh_path = path + "_" + std::to_string(i) + "_" + std::to_string(j);
-    
+
                 // **การเปลี่ยนแปลงสำคัญ**: เราไม่ได้ใช้ m_resourceManager.load อีกต่อไป
-                // แต่เราเรียกใช้ `resourceManager` ที่ถูกส่งเข้ามาเพื่อ "สร้าง" Resource โดยตรง                  
+                // แต่เราเรียกใช้ `resourceManager` ที่ถูกส่งเข้ามาเพื่อ "สร้าง" Resource โดยตรง
                 auto new_mesh = resourceManager.load<Mesh>(mesh_path, vertices, indices);
 
                 const cgltf_material* material = primitive->material;
                 if (material && material->has_pbr_metallic_roughness) {
                     // --- LOGGING START ---
                     std::cout << "GLTF_IMPORTER::DEBUG: Processing material '" << (material->name ? material->name : "N/A") << "' for mesh " << i << ", primitive " << j << std::endl;
-                    // --- LOGGING END ---                    
+                    // --- LOGGING END ---
                     const cgltf_texture_view& base_color_texture = material->pbr_metallic_roughness.base_color_texture;
                     if (base_color_texture.texture && base_color_texture.texture->image) {
                         const char* uri = base_color_texture.texture->image->uri;
@@ -103,7 +103,7 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
                             std::string texture_path = base_path + uri;
                             std::cout << "GLTF_IMPORTER::DEBUG: Found texture URI, loading: " << texture_path << std::endl;
                             new_mesh->setTexture(resourceManager.load<Texture>(texture_path));
-                            
+
                          } else if (base_color_texture.texture->image->buffer_view) {
                             // --- จัดการกับ Embedded Texture ---
                             cgltf_buffer_view* buffer_view = base_color_texture.texture->image->buffer_view;
@@ -111,7 +111,7 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
                             cgltf_size buffer_size = buffer_view->size;
 
                             std::cout << "GLTF_IMPORTER::DEBUG: Found embedded texture, decoding from memory." << std::endl;
-                            
+
                             // สร้าง Path ที่ไม่ซ้ำกันสำหรับ Resource Manager
                             std::string embedded_path = path + "_embedded_tex_" + std::to_string(i) + "_" + std::to_string(j);
                             new_mesh->setTexture(resourceManager.load<Texture>(embedded_path, buffer_data, buffer_size));
@@ -126,7 +126,16 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
     // เพิ่ม Log ตรงนี้เพื่อดูจำนวน Mesh ที่ประมวลผล
     std::cout << "GltfImporter: Processed " << meshes.size() << " meshes from file: " << path << std::endl;
     cgltf_free(data);
-    return true;
+
+    // --- ส่วนที่แก้ไข ---
+    if (!meshes.empty()) {
+        // ลงทะเบียน Mesh ตัวแรกด้วย path ดั้งเดิมของไฟล์ glb
+        // เพื่อให้ ResourceManager::load หาเจอในครั้งแรก
+        resourceManager.add(path, meshes[0]);
+    }
+    // คืนค่า true ก็ต่อเมื่อเราโหลด Mesh ได้อย่างน้อย 1 ชิ้น
+    return !meshes.empty();
+    // --- สิ้นสุดส่วนที่แก้ไข ---
 }
 
 } // namespace AEngine

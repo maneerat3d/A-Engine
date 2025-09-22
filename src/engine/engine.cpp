@@ -68,7 +68,7 @@ bool Engine::init() {
 
     for (const auto& subsystem : m_subsystems) {
         if (!subsystem->init()) {
-            std::cerr << "FATAL: Subsystem " << subsystem->getName() << " failed to initialize." << std::endl;
+            std::cerr << "FATAL: Subsystem " << subsystem->getName().c_str() << " failed to initialize." << std::endl;
             return false;
         }
     }

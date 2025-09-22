@@ -82,17 +82,12 @@ template <typename E> void setFlag(E& flags, E flag, bool set) {
 #else 
 	#define AENGINE_LIBRARY_EXPORT __attribute__((visibility("default")))
 	#define AENGINE_LIBRARY_IMPORT 
-	#define AENGINE_FORCE_INLINE __attribute__((always_inline)) inline
-	#define AENGINE_RESTRICT __restrict__
+	#define AENGINE_FORCE_INLINE __attribute__((always_inline)) inline // มีอยู่แล้ว
+	#define AENGINE_RESTRICT __restrict__     // <--- เพิ่มบรรทัดนี้
 #endif
 
-#ifdef STATIC_PLUGINS
-	#define AENGINE_CORE_API
-#elif defined BUILDING_CORE
-	#define AENGINE_CORE_API AENGINE_LIBRARY_EXPORT
-#else
-	#define AENGINE_CORE_API AENGINE_LIBRARY_IMPORT
-#endif
+#define AENGINE_CORE_API
+ 
 
 #ifdef _MSC_VER
 	#pragma warning(error : 4101)

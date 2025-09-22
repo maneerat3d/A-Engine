@@ -118,4 +118,4 @@ template<> struct HashFunc<RuntimeHash32> {
 	}
 };
 
-} // namespace Lumix
+} // namespace AEngine
