@@ -36,7 +36,7 @@ Engine::~Engine() {
 }
 
 void Engine::run() {
-    
+
     if (!init()) {
         std::cerr << "FATAL: Engine failed to initialize. Shutting down." << std::endl;
         shutdown();
@@ -117,6 +117,10 @@ void Engine::loadPlugins() {
 
 void Engine::gameLoop() {
     std::cout << "--- ENTERING GAME LOOP ---" << std::endl; // <-- ปักธงที่ 5
+
+    // เพิ่มบรรทัดนี้เพื่อดูค่าของ m_is_running ก่อนเข้า Loop
+    std::cout << "Value of m_is_running before loop: " << (m_is_running ? "true" : "false") << std::endl;
+
     uint32_t last_tick = SDL_GetTicks();
 
     while (m_is_running) {
@@ -134,6 +138,8 @@ void Engine::gameLoop() {
         for (auto* system : m_systems) {
             system->update(*m_scene, dt);
         }
+        std::cout << "SDL_GL_SwapWindow" << std::endl;
+        SDL_GL_SwapWindow(m_window);
     }
 }
 
