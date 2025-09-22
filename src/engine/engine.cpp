@@ -14,16 +14,21 @@
 #include "platform/platform_subsystem.h" // <--- Include Subsystem ใหม่
 #include "core/resource/resource_manager.h"
 #include "core/world/world_manager.h" // <--- Include Subsystem ใหม่
+#include "core/memory/unique_ptr.h"
 
 #include <iostream>
 #include <SDL.h> // ยังต้องใช้สำหรับ SDL_GetTicks()
 
 namespace AEngine {
 
-Engine::Engine()
-    : m_is_running(false)
-{
-}
+Engine::Engine(IAllocator& allocator)
+    : m_allocator(allocator)
+    , m_is_running(false)
+    , m_subsystems(allocator)
+    , m_plugins(allocator)
+    , m_systems(allocator)
+ {
+ }
 
 Engine::~Engine() {
 }
@@ -32,9 +37,9 @@ void Engine::createSubsystems()
 {
     // เรียงลำดับการสร้าง Subsystem ตามความสำคัญ
     // Platform ต้องถูกสร้างก่อน เพราะระบบอื่นอาจต้องใช้ Window
-    m_subsystems.emplace_back(std::make_unique<PlatformSubsystem>(*this));
-    m_subsystems.emplace_back(std::make_unique<ResourceManager>(*this));
-    m_subsystems.emplace_back(std::make_unique<WorldManager>(*this));
+    m_subsystems.emplace(UniquePtr<PlatformSubsystem>::create(m_allocator, *this));
+    m_subsystems.emplace(UniquePtr<ResourceManager>::create(m_allocator, *this));
+    m_subsystems.emplace(UniquePtr<WorldManager>::create(m_allocator, *this));
 
     // สร้าง Map เพื่อให้ค้นหา Subsystem ตาม Type ได้เร็ว
     for (const auto& sub : m_subsystems)
@@ -83,21 +88,23 @@ bool Engine::init() {
 // --- ฟังก์ชันใหม่ ---
 void Engine::loadPlugins() {
     std::cout << "Loading plugins..." << std::endl;
-    m_plugins.emplace_back(std::make_unique<RendererPlugin>(*this));
-    m_plugins.emplace_back(std::make_unique<GltfImporterPlugin>(*this));
-    m_plugins.emplace_back(std::make_unique<GamePlugin>(*this));
+    // 1. ใช้ UniquePtr::create และส่ง m_allocator เข้าไป
+    // 2. ใช้ .emplace() ของ Array เพื่อสร้าง UniquePtr ลงใน Array โดยตรง
+    m_plugins.emplace(UniquePtr<RendererPlugin>::create(m_allocator, *this));
+    m_plugins.emplace(UniquePtr<GltfImporterPlugin>::create(m_allocator, *this));
+    m_plugins.emplace(UniquePtr<GamePlugin>::create(m_allocator, *this));
 
     std::cout << "--- All plugins constructed. Now calling createSystems... ---" << std::endl;
+    // 3. ส่วนของ for-loop สามารถใช้งานได้เหมือนเดิม เพราะ Array ของเรามี begin() และ end()
     for (const auto& plugin : m_plugins) {
         std::cout << "Calling createSystems for plugin: " << plugin->getName() << std::endl;
         plugin->createSystems(*this);
         std::cout << "Finished createSystems for plugin: " << plugin->getName() << std::endl;
     }
 }
-
 // --- ฟังก์ชันใหม่ ---
 void Engine::addSystem(ISystem* system) {
-    m_systems.push_back(system);
+    m_systems.push(system);
 }
 
 void Engine::mainLoop() {
@@ -142,7 +149,7 @@ void Engine::shutdown() {
 
     for (auto* system : m_systems) {
         system->shutdown();
-        delete system;
+        AENGINE_DELETE(m_allocator, system);
     }
     m_systems.clear();
 
@@ -152,8 +159,8 @@ void Engine::shutdown() {
     m_plugins.clear();
 
     // Shutdown subsystems ในลำดับย้อนกลับ
-    for (auto it = m_subsystems.rbegin(); it != m_subsystems.rend(); ++it) {
-        (*it)->shutdown();
+    for (i32 i = m_subsystems.size() - 1; i >= 0; --i) {
+        m_subsystems[i]->shutdown();
     }
     m_subsystems.clear();
 }

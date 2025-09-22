@@ -13,12 +13,13 @@ namespace AEngine {
     class ResourceManager;
     class IPlugin;
     class ISystem;
+    class IAllocator;
 }
-#include <vector>
-#include <memory>
-#include <string>
+#include "core/container/array.h" // เพิ่ม
+#include "core/memory/unique_ptr.h" // เพิ่ม
 #include <unordered_map> // <--- เพิ่มบรรทัดนี้
 #include <typeindex>     // <--- เพิ่มบรรทัดนี้
+#include "core/string/string.h"
 
 namespace AEngine {
 
@@ -30,15 +31,18 @@ class ISystem; // <--- เพิ่ม
 class Engine {
 public:
     Engine();
+    explicit Engine(IAllocator& allocator); // แก้ไข Constructor
     ~Engine();
 
     void run();
 
     // --- Subsystem Management ---
     template <typename T>
-    T* getSubsystem(const std::string& name) const;
+    T* getSubsystem(const AEngine::String& name) const;
     template <typename T>
     T* getSubsystem() const;
+
+    IAllocator& getAllocator() { return m_allocator; } // เพิ่ม Getter
 
     void addSystem(ISystem* system); // <--- เพิ่ม
 
@@ -50,13 +54,15 @@ private:
 
     void createSubsystems();
 
+    IAllocator& m_allocator;
+
     bool m_is_running;
 
-    std::vector<std::unique_ptr<ISubsystem>> m_subsystems;
+    Array<UniquePtr<ISubsystem>> m_subsystems;
     std::unordered_map<std::type_index, ISubsystem*> m_subsystem_map;
     // --- Plugin and System Management ---
-    std::vector<std::unique_ptr<IPlugin>> m_plugins; // <--- เพิ่ม
-    std::vector<ISystem*> m_systems;  
+    Array<UniquePtr<IPlugin>> m_plugins;
+    Array<ISystem*> m_systems;  
 };    
 
 template <typename T>
@@ -67,24 +73,5 @@ T* Engine::getSubsystem() const {
     }
     return nullptr;
 } 
-    
-//     void loadPlugins();
-//     // Member variables สำหรับเก็บสถานะของ Engine
-//     SDL_Window* m_window; // Engine ยังคงเป็นเจ้าของ window
-//     SDL_GLContext m_gl_context; // และ GL Context
-//     Scene* m_scene;       // Engine เป็นเจ้าของ Scene
-//     ResourceManager* m_resourceManager; // Engine เป็นเจ้าของ ResourceManager
-
-//     // Plugin and System Management
-//     std::vector<IPlugin*> m_plugins;
-//     std::vector<ISystem*> m_systems;
-
-// public:
-//     // Public getters for plugins to access necessary resources
-//     SDL_Window* getWindow() { return m_window; }
-//     Scene* getScene() { return m_scene; } // <-- เพิ่มบรรทัดนี้
-//     ResourceManager* getResourceManager() { return m_resourceManager; } 
-//     void addSystem(ISystem* system) { m_systems.push_back(system); }    
-// };
 
 } // namespace AEngine
