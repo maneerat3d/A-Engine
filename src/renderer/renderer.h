@@ -3,19 +3,19 @@
 // Forward declaration
 struct SDL_Window;
 
-// Forward declare Scene เพื่อไม่ต้อง include scene.h
-namespace AEngine { class World; } 
-
+namespace AEngine { 
+    class World; 
+    class Framebuffer;
+} 
 namespace AEngine {
 
 class Renderer {
 public:
-    Renderer();
     ~Renderer();
 
     // เราจะส่ง SDL_Window เข้ามาตอน init
     void init(SDL_Window* window);
-    void render(World& world); 
+    void render(World& world, Framebuffer* framebuffer = nullptr);
     void shutdown();
 
 private:

@@ -4,6 +4,7 @@ add_library(aengine_renderer
     render_system.cpp
     renderer.cpp
     texture.cpp
+    framebuffer.cpp
 )
 
 target_link_libraries(aengine_renderer PRIVATE 

@@ -8,6 +8,7 @@
 // Forward declarations
 namespace AEngine {
 class Renderer;
+class Framebuffer;
 class Engine;
 class World; // ใช้ World แทน Scene
 
@@ -19,7 +20,8 @@ public:
 
     // --- ISystem Interface Implementation ---
     void init() override;
-    void update(World& world, float dt) override; // แก้ไขให้รับ World&
+    void update(World& world, float dt) override;
+    void renderToFramebuffer(World& world, Framebuffer* framebuffer);
     void shutdown() override;
 
 private:

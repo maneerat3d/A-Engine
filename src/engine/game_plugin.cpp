@@ -32,7 +32,7 @@ void GamePlugin::createSystems(Engine& engine) {
         if (!world) return;
 
         // การโหลด Resource ยังคงเหมือนเดิม แต่เราได้ ResourceManager มาจากวิธีใหม่
-        auto mainMeshResource = resourceManager->load<Mesh>("models/monkey.glb");
+        //auto mainMeshResource = resourceManager->load<Mesh>("models/monkey.glb");
         auto allMonkeyMeshes = resourceManager->findAll<Mesh>("models/monkey.glb");
 
         if (!allMonkeyMeshes.empty()) {
@@ -42,7 +42,7 @@ void GamePlugin::createSystems(Engine& engine) {
                 transform.position = {-1.5f, 0.0f, 0.0f};
                 world->addComponent(model1, transform); // <--- เพิ่ม Component ให้ world
                 world->addComponent<ECS::RenderableComponent>(model1, {allMonkeyMeshes[0], allMonkeyMeshes[0]->getTexture()});
-                world->addComponent<ECS::RotatingCubeComponent>(model1, {1.0f});
+                world->addComponent<ECS::RotatingCubeComponent>(model1, {0.0f});
             }
         }
     }

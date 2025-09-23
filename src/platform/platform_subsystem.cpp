@@ -66,8 +66,6 @@ void PlatformSubsystem::update(float dt) {
             m_quit_requested = true;
         }
     }
-     // การ Swap Window จะถูกย้ายไปที่ RenderSystem ในอนาคต แต่ตอนนี้ให้ Platform ทำไปก่อน
-    SDL_GL_SwapWindow(m_window);
 }
 
 void PlatformSubsystem::shutdown() {

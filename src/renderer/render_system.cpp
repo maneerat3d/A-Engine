@@ -1,14 +1,11 @@
 #include "render_system.h"
 #include "renderer.h"
+#include "framebuffer.h"
 #include "engine/engine.h"
 #include "platform/platform_subsystem.h"
 #include "core/world/world.h"
-#include "core/memory/core.h" // <--- เพิ่มบรรทัดนี้
+#include "core/memory/core.h"
 
-// -- PHASE 1 (ต่อ): แก้ไขการเชื่อมต่อของ RenderSystem --
-// - Constructor ถูกแก้ไขให้รับและเก็บ Engine context
-// - init() จะขอ SDL_Window จาก PlatformSubsystem ผ่าน Engine
-// - update() รับ World& เข้ามาและส่งต่อไปให้ Renderer
 
 namespace AEngine {
 
@@ -19,6 +16,14 @@ RenderSystem::RenderSystem(Engine& engine)
 RenderSystem::~RenderSystem() {
     // Destructor จะถูกเรียกตอน shutdown, m_renderer จะถูกลบใน shutdown()
 }
+
+void RenderSystem::renderToFramebuffer(World& world, Framebuffer* framebuffer) {
+    // ส่ง world และ framebuffer ต่อไปให้ renderer จัดการ
+    if (m_renderer) {
+        m_renderer->render(world, framebuffer);
+    }
+}
+
 
 void RenderSystem::init() {
     // ใช้ Allocator ของ Engine ในการสร้าง Renderer

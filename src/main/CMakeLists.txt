@@ -4,7 +4,8 @@ add_executable(aengine_main main.cpp)
 # Link Executable เข้ากับ Library ทั้งหมดที่ต้องใช้
 # การเพิ่ม plugin library ทั้งหมดเข้ามาตรงนี้ คือการแก้ปัญหา Linker Error
 target_link_libraries(aengine_main 
-    PRIVATE 
+    PRIVATE
+        aengine_editor    
         aengine_engine
         renderer_plugin
         game_plugin
@@ -12,6 +13,7 @@ target_link_libraries(aengine_main
         SDL2::SDL2
         glad
         opengl32
+        imgui
 )
 
 # --- การตั้งค่าสำหรับ GLAD (เพื่อให้ main.cpp ใช้งานได้) ---

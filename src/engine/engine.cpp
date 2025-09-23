@@ -52,15 +52,6 @@ void Engine::createSubsystems()
 }
 
 
-void Engine::run() {
-    if (!init()) {
-        std::cerr << "FATAL: Engine failed to initialize. Shutting down." << std::endl;
-        shutdown();
-        return;
-    }
-    mainLoop();
-    shutdown();
-}
 
 bool Engine::init() {
     std::cout << "A-Engine is initializing..." << std::endl;
@@ -81,7 +72,7 @@ bool Engine::init() {
         system->init();
     }
 
-    m_is_running = true;
+
     return true;
 }
 
@@ -107,42 +98,24 @@ void Engine::addSystem(ISystem* system) {
     m_systems.push(system);
 }
 
-void Engine::mainLoop() {
-    std::cout << "--- ENTERING MAIN LOOP ---" << std::endl;
-    uint32_t last_tick = SDL_GetTicks();
+void Engine::update(float dt) {
+    // 1. อัปเดต Subsystems ทั้งหมดก่อน
+    for (const auto& subsystem : m_subsystems) {
+        subsystem->update(dt);
+    }
 
-    auto* platform = getSubsystem<PlatformSubsystem>();
-
-   // --- DIAGNOSTIC: เพิ่มบรรทัดนี้เพื่อตรวจสอบค่าของ m_is_running ---
-   std::cout << "Value of m_is_running before loop: " << (m_is_running ? "true" : "false") << std::endl;
-
-    while (m_is_running) {
-        if (platform && platform->isQuitRequested()) {
-            m_is_running = false;
-            continue;
-        }
-
-        uint32_t current_tick = SDL_GetTicks();
-        float dt = (current_tick - last_tick) / 1000.0f;
-        last_tick = current_tick;
-
-        // --- Update all subsystems ---
-        for (const auto& subsystem : m_subsystems) {
-            subsystem->update(dt);
-        }
-        // --- Update all systems ---
-        WorldManager* worldManager = getSubsystem<WorldManager>();
-        if (worldManager) {
-            World* world = worldManager->getActiveWorld();
-            if (world) {
-                // วนลูปเพื่อเรียก update ของทุก System ที่ลงทะเบียนไว้
-                for (auto* system : m_systems) {
-                    system->update(*world, dt);
-                }
+    // 2. อัปเดต Systems ทั้งหมด โดยใช้ Active World จาก WorldManager
+    WorldManager* worldManager = getSubsystem<WorldManager>();
+    if (worldManager) {
+        World* world = worldManager->getActiveWorld();
+        if (world) {
+            for (auto* system : m_systems) {
+                system->update(*world, dt);
             }
         }
     }
 }
+
 
 void Engine::shutdown() {
     std::cout << "A-Engine is shutting down." << std::endl;

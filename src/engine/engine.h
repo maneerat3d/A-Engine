@@ -1,9 +1,4 @@
 #pragma once
-// -- PHASE 1: Decoupling the Core Engine --
-// Engine ถูกปรับบทบาทเป็น Context หรือ Service Locator
-// ไม่ได้เป็นเจ้าของระบบหลักๆ อีกต่อไป แต่ทำหน้าที่จัดการ Lifecycle
-// ของ Subsystems และเป็นศูนย์กลางให้ระบบต่างๆ สื่อสารถึงกัน
-// Forward declaration เพื่อไม่ต้อง include SDL.h ใน header
 struct SDL_Window;
 using SDL_GLContext = void*; // Forward declare GL Context
 
@@ -15,17 +10,17 @@ namespace AEngine {
     class ISystem;
     class IAllocator;
 }
-#include "core/container/array.h" // เพิ่ม
-#include "core/memory/unique_ptr.h" // เพิ่ม
-#include <unordered_map> // <--- เพิ่มบรรทัดนี้
-#include <typeindex>     // <--- เพิ่มบรรทัดนี้
+#include "core/container/array.h" 
+#include "core/memory/unique_ptr.h" 
+#include <unordered_map> 
+#include <typeindex>     
 #include "core/string/string.h"
 
 namespace AEngine {
 
 class ISubsystem;
-class IPlugin; // <--- เพิ่ม
-class ISystem; // <--- เพิ่ม
+class IPlugin; 
+class ISystem; 
 
 
 class Engine {
@@ -34,7 +29,10 @@ public:
     explicit Engine(IAllocator& allocator); // แก้ไข Constructor
     ~Engine();
 
-    void run();
+    bool init();
+    void update(float dt);
+    void shutdown();
+    
 
     // --- Subsystem Management ---
     template <typename T>
@@ -44,13 +42,12 @@ public:
 
     IAllocator& getAllocator() { return m_allocator; } // เพิ่ม Getter
 
-    void addSystem(ISystem* system); // <--- เพิ่ม
+    void addSystem(ISystem* system); 
+    const Array<ISystem*>& getSystems() const { return m_systems; }
 
 private:
-    void loadPlugins(); // <--- เพิ่ม
-    bool init();
-    void mainLoop();
-    void shutdown();
+    void loadPlugins(); 
+
 
     void createSubsystems();
 

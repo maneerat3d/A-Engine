@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "core/world/world.h"
 #include "mesh.h"
+#include "framebuffer.h"
 #include "texture.h"
 // include ทุกอย่างที่จำเป็นสำหรับการเรนเดอร์
 #include <iostream>
@@ -63,14 +64,7 @@ unsigned int create_shader_program(unsigned int vertexShader, unsigned int fragm
 
 namespace AEngine {
 
-Renderer::Renderer()
-    : m_shader_program(0)
-    , m_model_loc(-1)
-    , m_view_loc(-1)
-    , m_projection_loc(-1)
-    , m_window(nullptr)
-{
-}
+
 
 Renderer::~Renderer() {
 }
@@ -97,7 +91,11 @@ void Renderer::init(SDL_Window* window) {
     glUniform1i(glGetUniformLocation(m_shader_program, "ourTexture"), 0);
 }
 
-void Renderer::render(World& world) {
+void Renderer::render(World& world, Framebuffer* framebuffer) {
+ 
+    if (framebuffer) {
+        framebuffer->bind();
+    }
 
      glClearColor(0.1f, 0.2f, 0.4f, 1.0f);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -137,6 +135,10 @@ void Renderer::render(World& world) {
             glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, &model[0][0]);
             glDrawElements(GL_TRIANGLES, renderable.mesh->getIndexCount(), GL_UNSIGNED_INT, 0);
         }
+    }
+
+    if (framebuffer) {
+        framebuffer->unbind();
     }
 }
 

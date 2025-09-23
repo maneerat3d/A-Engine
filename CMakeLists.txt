@@ -23,11 +23,16 @@ set(CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/external)
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 
+
+# --- ImGui ---
+add_subdirectory(external/imgui)
+
 # เพิ่ม Subdirectories ของแต่ละ Module
 # CMake จะเข้าไปอ่าน CMakeLists.txt ในโฟลเดอร์เหล่านี้
 add_subdirectory(external/cgltf)
 add_subdirectory(src/core)
 add_subdirectory(src/renderer)
 add_subdirectory(src/engine)
+add_subdirectory(src/editor)
 add_subdirectory(src/plugins) 
 add_subdirectory(src/main)

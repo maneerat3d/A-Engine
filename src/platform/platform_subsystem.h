@@ -23,6 +23,7 @@ public:
     void shutdown() override;
 
     SDL_Window* getWindow() const { return m_window; }
+    SDL_GLContext getGLContext() const { return m_gl_context; }
     bool isQuitRequested() const { return m_quit_requested; }
 
 private:

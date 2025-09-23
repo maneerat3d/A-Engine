@@ -1,15 +1,11 @@
-#include <engine.h>
-#include "core/memory/default_allocator.h"
+#include "editor/editor.h"
 
 int main(int argc, char** argv) {
 
-    // สร้าง Allocator หลักสำหรับใช้งาน
-    AEngine::DefaultAllocator allocator;    
-
-    // ส่ง Allocator เข้าไปใน constructor
-    AEngine::Engine engine(allocator);     
-    // สั่งให้ Engine ทำงาน
-    engine.run();
+    // สร้าง Editor Application
+    AEngine::Editor editor;
+    // สั่งให้ Editor ทำงาน
+    editor.run();
 
     return 0;
 }
