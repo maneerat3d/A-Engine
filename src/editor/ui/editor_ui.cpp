@@ -49,9 +49,9 @@ void EditorUI::drawMenuBarItems() {
 }
 
 // --- ส่วนที่แก้ไข: เพิ่มฟังก์ชัน drawPopups() ---
-void EditorUI::drawPopups() {
+// void EditorUI::drawPopups() {
     
-}
+// }
 
 
 void EditorUI::drawLoadObjectDialog(const std::string& selected_path) {
@@ -70,7 +70,7 @@ void EditorUI::drawLoadObjectDialog(const std::string& selected_path) {
                 world->addComponent(new_entity, transform);
 
                 world->addComponent<ECS::RenderableComponent>(new_entity, {mesh, mesh->getTexture()});
-                world->addComponent<ECS::RotatingCubeComponent>(new_entity, {1.0f});
+                world->addComponent<ECS::RotatingCubeComponent>(new_entity, {0.0f});
 
                 std::cout << "EditorUI: Loaded object '" << selected_path << "' and created entity " << new_entity << std::endl;
             } else {

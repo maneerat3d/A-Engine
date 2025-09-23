@@ -1,5 +1,5 @@
 #pragma once
-
+#include <cstdint>
 // Forward declaration
 struct SDL_Window;
 
@@ -17,6 +17,7 @@ public:
     void init(SDL_Window* window);
     void render(World& world, Framebuffer* framebuffer = nullptr);
     void shutdown();
+    void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
 private:
     // Member variables ทั้งหมดที่เกี่ยวกับ OpenGL ถูกย้ายมาที่นี่

@@ -16,6 +16,6 @@ namespace AEngine {
     private:
         Engine* m_engine;
         UniquePtr<Framebuffer> m_framebuffer;
-        u32 m_width = 0, m_height = 0;
+        u32 m_width = 1024, m_height = 1024;
     };
 }

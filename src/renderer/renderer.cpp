@@ -142,6 +142,11 @@ void Renderer::render(World& world, Framebuffer* framebuffer) {
     }
 }
 
+void Renderer::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    // เรียกฟังก์ชันของ OpenGL โดยตรงเพื่อกำหนดพื้นที่ในการวาด
+    glViewport(x, y, width, height);
+}
+
 void Renderer::shutdown() {
     // คืนทรัพยากรทั้งหมด
     glDeleteProgram(m_shader_program);

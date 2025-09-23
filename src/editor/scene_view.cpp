@@ -23,23 +23,30 @@ void SceneView::onGUI() {
     ImGui::Begin("Scene View");
 
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-    if (viewportPanelSize.x != m_width || viewportPanelSize.y != m_height) {
-        m_framebuffer->resize((u32)viewportPanelSize.x, (u32)viewportPanelSize.y);
+
+       // เพิ่มการตรวจสอบว่าขนาดมากกว่า 0 เพื่อป้องกัน error ตอนย่อหน้าต่างสุดๆ
+    if (viewportPanelSize.x > 0 && viewportPanelSize.y > 0 &&
+        (m_width != (u32)viewportPanelSize.x || m_height != (u32)viewportPanelSize.y))
+    {
         m_width = (u32)viewportPanelSize.x;
         m_height = (u32)viewportPanelSize.y;
+        m_framebuffer->resize(m_width, m_height);
+
+		RenderSystem* renderSystem = m_engine->getSystem<RenderSystem>();
+
+        if (renderSystem) {
+			renderSystem->onViewportResize(m_width, m_height);
+		}
     }
 
     // Render world to framebuffer
     WorldManager* worldManager = m_engine->getSubsystem<WorldManager>();
+    
     if (worldManager) {
         World* world = worldManager->getActiveWorld();
         if (world) {
-            // ค้นหา RenderSystem จาก Engine
-            RenderSystem* renderSystem = nullptr;
-            for(auto* sys : m_engine->getSystems()) {
-                renderSystem = dynamic_cast<RenderSystem*>(sys);
-                if(renderSystem) break;
-            }
+
+            RenderSystem* renderSystem = m_engine->getSystem<RenderSystem>();
 
             if (renderSystem) {
                 renderSystem->renderToFramebuffer(*world, m_framebuffer.get());

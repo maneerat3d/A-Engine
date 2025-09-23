@@ -45,6 +45,9 @@ public:
     void addSystem(ISystem* system); 
     const Array<ISystem*>& getSystems() const { return m_systems; }
 
+    template <typename T>
+    T* getSystem() const;
+
 private:
     void loadPlugins(); 
 
@@ -70,5 +73,16 @@ T* Engine::getSubsystem() const {
     }
     return nullptr;
 } 
+
+template <typename T>
+T* Engine::getSystem() const {
+    for (auto* system : m_systems) {
+        if (auto* result = dynamic_cast<T*>(system)) {
+            return result;
+        }
+    }
+    return nullptr;
+}
+
 
 } // namespace AEngine

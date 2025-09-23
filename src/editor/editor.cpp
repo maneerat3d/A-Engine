@@ -154,17 +154,15 @@ void Editor::renderUI() {
 
     if (ImGui::BeginMenuBar())
     {
-        // --- ส่วนที่แก้ไข: เรียกฟังก์ชันที่ถูกต้อง ---
         m_editor_ui->drawMenuBarItems();
         ImGui::EndMenuBar();
     }
 
-    // --- ส่วนที่แก้ไข: เรียกวาด Popups ที่นี่ ---
-    m_editor_ui->drawPopups();
 
     // Render different editor windows
     m_scene_view->onGUI();
-    ImGui::ShowDemoWindow();
+    
+    // ImGui::ShowDemoWindow();
 
     ImGui::End();
 }

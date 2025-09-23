@@ -14,7 +14,7 @@ public:
 
     // --- ส่วนที่แก้ไข: แยกฟังก์ชันการวาด ---
     void drawMenuBarItems(); // สำหรับวาดเมนู File, Edit, etc.
-    void drawPopups();       // สำหรับวาด UI ที่เป็นหน้าต่างลอย เช่น FileBrowser
+    //void drawPopups();       // สำหรับวาด UI ที่เป็นหน้าต่างลอย เช่น FileBrowser
 
 private:
     void drawLoadObjectDialog(const std::string& selected_path);

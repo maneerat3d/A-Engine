@@ -1,9 +1,6 @@
 #pragma once
 #include "core/ecs/isystem.h"
-
-// -- PHASE 1 (ต่อ): แก้ไขการเชื่อมต่อของ RenderSystem --
-// - ทำให้ RenderSystem รู้จัก Engine เพื่อดึง Subsystem ที่จำเป็น (เช่น PlatformSubsystem)
-// - เปลี่ยนจากการรับ Scene มาเป็น World ให้สอดคล้องกับโครงสร้างใหม่
+#include <cstdint>
 
 // Forward declarations
 namespace AEngine {
@@ -24,9 +21,14 @@ public:
     void renderToFramebuffer(World& world, Framebuffer* framebuffer);
     void shutdown() override;
 
+    void onViewportResize(uint32_t width, uint32_t height);
+
 private:
     Renderer* m_renderer;
     Engine& m_engine; // เก็บ reference ไปยัง Engine เพื่อใช้ getSubsystem
+
+    uint32_t m_viewportWidth = 1280;
+    uint32_t m_viewportHeight = 720;
 };
 
 } // namespace AEngine
