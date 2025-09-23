@@ -98,6 +98,10 @@ public:
 	u32 length() const { return m_size; }
 	const char* c_str() const { return isSmall() ? m_small : m_big; }
 	
+    // --- เพิ่มบรรทัดนี้ ---
+    bool empty() const { return m_size == 0; }
+    // --------------------
+
     String& add(StringView value);
 	void insert(u32 position, const char* value);
 	void insert(u32 position, StringView value);

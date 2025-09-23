@@ -1,6 +1,7 @@
 #include "editor.h"
 #include "scene_view.h"
 #include "engine/engine.h"
+#include "ui/editor_ui.h"
 #include "core/memory/default_allocator.h"
 #include "platform/platform_subsystem.h"
 
@@ -15,7 +16,7 @@
 namespace AEngine {
 
 Editor::Editor()
-    : m_allocator(nullptr), m_engine(nullptr), m_scene_view(nullptr), m_is_running(false)
+    : m_allocator(nullptr), m_engine(nullptr), m_editor_ui(nullptr)
 {
 }
 
@@ -50,11 +51,13 @@ void Editor::init() {
     ImGui_ImplSDL2_InitForOpenGL(platform->getWindow(), platform->getGLContext()); 
     ImGui_ImplOpenGL3_Init("#version 330 core"); 
 
+    m_editor_ui = new EditorUI(*this, *m_engine, *m_allocator);
     m_scene_view = new SceneView(m_engine);
 }
 
 void Editor::shutdown() {
     delete m_scene_view;
+    delete m_editor_ui;
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
@@ -151,13 +154,13 @@ void Editor::renderUI() {
 
     if (ImGui::BeginMenuBar())
     {
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("Exit")) { m_is_running = false; }
-            ImGui::EndMenu();
-        }
+        // --- ส่วนที่แก้ไข: เรียกฟังก์ชันที่ถูกต้อง ---
+        m_editor_ui->drawMenuBarItems();
         ImGui::EndMenuBar();
     }
+
+    // --- ส่วนที่แก้ไข: เรียกวาด Popups ที่นี่ ---
+    m_editor_ui->drawPopups();
 
     // Render different editor windows
     m_scene_view->onGUI();

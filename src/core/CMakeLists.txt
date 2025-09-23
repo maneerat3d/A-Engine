@@ -8,6 +8,7 @@ add_library(aengine_core
     world/world.cpp
     world/world_manager.cpp
     resource/resource_manager.cpp
+    os.cpp
     plugin/iplugin.h
     # Add new plugin/system interfaces here
     # Note: These are headers, but since 'core' is a full library now, it's fine.

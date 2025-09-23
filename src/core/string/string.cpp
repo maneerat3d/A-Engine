@@ -4,6 +4,7 @@
 #include <cctype>    // <--- เพิ่มเข้ามาสำหรับ tolower
 #include <cmath>     // <--- เพิ่มเข้ามาสำหรับ log10, floor, pow
 #include <cstdio>    // <--- เพิ่มเข้ามาสำหรับ sprintf (หรือจะ implement toCString เองก็ได้)
+#include <algorithm> // For std::min
 
 namespace AEngine
 {
@@ -181,6 +182,29 @@ void String::insert(u32 position, StringView value) {
 void String::insert(u32 position, const char* value) { insert(position, StringView(value)); }
 
 // --- Global string functions ---
+
+// --- ฟังก์ชันที่เพิ่มเข้ามา ---
+char* copyString(Span<char> output, StringView source) {
+    if (output.length() == 0) return nullptr;
+    
+    u32 len = std::min(source.size(), output.length() - 1);
+    if (source.begin) {
+        memcpy(output.begin(), source.begin, len);
+    }
+    output[len] = '\0';
+    return output.begin();
+}
+
+const char* reverseFind(StringView haystack, char c) {
+    if (haystack.empty()) return nullptr;
+    for (const char* ptr = haystack.end - 1; ptr >= haystack.begin; --ptr) {
+        if (*ptr == c) {
+            return ptr;
+        }
+    }
+    return nullptr;
+}
+// --- สิ้นสุดฟังก์ชันที่เพิ่มเข้ามา ---
 
 int compareStringInsensitive(StringView lhs, StringView rhs) {
     // ... implementation from Lumix ...

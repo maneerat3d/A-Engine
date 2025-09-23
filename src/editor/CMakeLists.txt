@@ -1,6 +1,8 @@
 # สร้าง Library สำหรับ Editor A-Engine/src/editor/CMakeLists.txt
 add_library(aengine_editor
     editor.cpp
+    ui/editor_ui.cpp
+    ui/file_browser.cpp
     scene_view.cpp
 )
 

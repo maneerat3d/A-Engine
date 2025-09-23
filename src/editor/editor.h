@@ -3,6 +3,7 @@
 namespace AEngine {
     class Engine;
     class IAllocator;
+    class EditorUI;
     class SceneView;
 }
 
@@ -24,6 +25,7 @@ private:
 
     IAllocator* m_allocator;
     Engine* m_engine;
+    EditorUI* m_editor_ui;
     SceneView* m_scene_view;
 
     bool m_is_running;
