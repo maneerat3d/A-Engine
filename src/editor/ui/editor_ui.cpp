@@ -7,6 +7,7 @@
 #include "core/ecs/components.h"
 #include "renderer/mesh.h"
 #include "renderer/texture.h"
+#include "portable-file-dialogs.h"
 
 #include <imgui.h>
 #include <vector>
@@ -20,7 +21,6 @@ EditorUI::EditorUI(Editor& editor, Engine& engine, IAllocator& allocator)
     : m_editor(editor)
     , m_engine(engine)
     , m_allocator(allocator)
-    , m_file_browser(allocator)
 {
 }
 
@@ -31,14 +31,15 @@ EditorUI::~EditorUI() {
 void EditorUI::drawMenuBarItems() {
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("Load Object...")) {
-            m_file_browser.open(
-                "Load Object",
-                "models",
-                {".glb", ".gltf"},
-                [this](const std::string& selected_path) {
-                    drawLoadObjectDialog(selected_path);
-                }
-            );
+            std::cout << "[EditorUI] 'Load Object...' menu item clicked." << std::endl;
+            // --- ส่วนที่เปลี่ยน ---
+            auto selection = pfd::open_file("Load Object", "models",
+                                             { "GLTF Models", "*.gltf *.glb", "All Files", "*" },
+                                             pfd::opt::none).result();
+
+            if (!selection.empty()) {
+                drawLoadObjectDialog(selection[0]);
+            }
         }
         if (ImGui::MenuItem("Exit")) {
             // m_editor.requestExit(); 
@@ -49,7 +50,7 @@ void EditorUI::drawMenuBarItems() {
 
 // --- ส่วนที่แก้ไข: เพิ่มฟังก์ชัน drawPopups() ---
 void EditorUI::drawPopups() {
-    m_file_browser.onGUI();
+    
 }
 
 

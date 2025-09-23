@@ -1,6 +1,6 @@
 #pragma once
 #include "core/string/string.h"
-#include "file_browser.h"
+#include <string>
 
 namespace AEngine {
 
@@ -23,7 +23,6 @@ private:
     Engine& m_engine;
     IAllocator& m_allocator;
 
-    FileBrowser m_file_browser;
 };
 
 } // namespace AEngine

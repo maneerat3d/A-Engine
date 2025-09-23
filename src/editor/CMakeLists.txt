@@ -2,7 +2,6 @@
 add_library(aengine_editor
     editor.cpp
     ui/editor_ui.cpp
-    ui/file_browser.cpp
     scene_view.cpp
 )
 
@@ -12,6 +11,7 @@ target_include_directories(aengine_editor PUBLIC
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/external
     ${CMAKE_SOURCE_DIR}/external/imgui
+    ${CMAKE_SOURCE_DIR}/external/portable-file-dialogs/
 )
 
 # Link Editor เข้ากับ Library ที่ต้องใช้
