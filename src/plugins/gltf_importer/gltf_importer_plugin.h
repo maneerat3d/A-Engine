@@ -1,25 +1,27 @@
 #pragma once
 #include "core/plugin/iplugin.h"
+#include "core/resource/i_resource_importer.h"
 
 namespace AEngine {
     class Engine;
-    
-    // Forward declare แค่ struct ที่เป็น implementation ก็พอ
-    struct GltfImporterPluginImpl;
 
-    class GltfImporterPlugin final : public IPlugin {
+    // คลาสเดียวที่สืบทอดจาก Interface ทั้งสอง
+    class GltfImporterPlugin final : public IPlugin, public IResourceImporter {
     public:
         explicit GltfImporterPlugin(Engine& engine);
         ~GltfImporterPlugin() override;
 
-        const char* getName() const override { return "gltf_importer"; }
-
+        // --- IPlugin Implementation ---
+        const char* getName() const override { return "GltfImporterPlugin"; }
         void createSystems(Engine& engine) override;
-        void destroySystems(Engine& engine) override { /* ไม่ต้องทำอะไร */ }
+        void destroySystems(Engine& engine) override;
+        
+        // --- IResourceImporter Implementation ---
+        bool load(const std::string& path, ResourceManager& resourceManager) override;
+        Resource::Type getResourceType() const override { return Resource::Type::Mesh; }
         
     private:
         Engine& m_engine;
-        GltfImporterPluginImpl* m_pimpl; // Pointer to implementation
     };
 
 } // namespace AEngine

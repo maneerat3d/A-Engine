@@ -1,46 +1,175 @@
 #include "gltf_importer_plugin.h"
-#include "gltf_importer.h"
 #include "engine/engine.h"
 #include "core/resource/resource_manager.h"
-#include "core/memory/unique_ptr.h"
+#include "renderer/mesh.h"
+#include "renderer/texture.h"
+
+// --- Dependencies สำหรับการโหลด GLTF ---
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+#define CGLTF_IMPLEMENTATION
+#include <cgltf.h>
+// --- End Dependencies ---
+
 #include <iostream>
+#include <vector>
 
 namespace AEngine {
-    // PImpl (Pointer to implementation) idiom
-    // ซ่อนรายละเอียดการ implement ไว้ในไฟล์ .cpp
-    struct GltfImporterPluginImpl {
-        // **ส่วนที่ปรับปรุง**: เปลี่ยนจาก Array<UniquePtr<...>> มาเป็น UniquePtr ตัวเดียว
-        // เพราะ Plugin นี้จัดการ Importer แค่ประเภทเดียว ทำให้โค้ดง่ายลง
-        UniquePtr<IResourceImporter> m_importer;
-    };
 
     GltfImporterPlugin::GltfImporterPlugin(Engine& engine)
-        : m_engine(engine)
-    {
-        // สร้าง implementation object
-        m_pimpl = AENGINE_NEW(engine.getAllocator(), GltfImporterPluginImpl)();
-    }
+        : m_engine(engine) {}
 
-    GltfImporterPlugin::~GltfImporterPlugin() {
-        // ทำลาย implementation object เพื่อป้องกัน memory leak
-        AENGINE_DELETE(m_engine.getAllocator(), m_pimpl);
-    }
+    GltfImporterPlugin::~GltfImporterPlugin() {}
 
+    // --- IPlugin Logic ---
     void GltfImporterPlugin::createSystems(Engine& engine) {
-        std::cout << "GltfImporterPlugin: Creating and registering importer..." << std::endl;
+        std::cout << "GltfImporterPlugin: Registering self as an importer..." << std::endl;
         
-        // **ส่วนที่ปรับปรุง**: สร้าง Importer และให้ PImpl จัดการ Ownership โดยตรง
-        m_pimpl->m_importer = UniquePtr<GltfImporter>::create(engine.getAllocator());
-
         ResourceManager* manager = engine.getSubsystem<ResourceManager>();
         if (manager) {
-            // ลงทะเบียน Importer โดยส่ง Raw Pointer ไปให้ Manager
-            // Ownership ของ Importer ยังคงอยู่ที่ Plugin (m_pimpl)
-            manager->registerImporter({".gltf", ".glb"}, m_pimpl->m_importer.get());
+            // ลงทะเบียน "ตัวเอง" (this) ในฐานะ IResourceImporter
+            // เพราะคลาสนี้ implement interface นั้นโดยตรง
+            manager->registerImporter({".gltf", ".glb"}, this);
         }
     }
- 
+
+    void GltfImporterPlugin::destroySystems(Engine& engine) {
+        // ในอนาคต เราควรเพิ่มฟังก์ชัน unregisterImporter ใน ResourceManager
+        // เพื่อให้ปลั๊กอินถอนการติดตั้งตัวเองได้อย่างสมบูรณ์
+        std::cout << "GltfImporterPlugin: Unregistering importer..." << std::endl;
+        // ResourceManager* manager = engine.getSubsystem<ResourceManager>();
+        // if (manager) {
+        //     manager->unregisterImporter(this);
+        // }
+    }
+
+bool GltfImporterPlugin::load(const std::string& path, ResourceManager& resourceManager)
+{
+    cgltf_options options = {};
+    cgltf_data* data = NULL;
+    cgltf_result result = cgltf_parse_file(&options, path.c_str(), &data);
+
+    if (result != cgltf_result_success) {
+        std::cerr << "ERROR::GLTF_IMPORTER::COULD_NOT_LOAD: " << path << std::endl;
+        return false;
+    }
+
+    result = cgltf_load_buffers(&options, data, path.c_str());
+    if (result != cgltf_result_success) {
+        cgltf_free(data);
+        std::cerr << "ERROR::GLTF_IMPORTER::COULD_NOT_LOAD_BUFFERS: " << path << std::endl;
+        return false;
+    }
+
+    // --- LOGGING START ---
+    std::cout << "GLTF_IMPORTER::INFO: Loading file: " << path << std::endl;
+    std::cout << "GLTF_IMPORTER::INFO: Found " << data->materials_count << " materials." << std::endl;
+    std::cout << "GLTF_IMPORTER::INFO: Found " << data->textures_count << " textures." << std::endl;
+    // --- LOGGING END ---
+
+    std::vector<std::shared_ptr<Mesh>> meshes;
+
+    for (cgltf_size i = 0; i < data->meshes_count; ++i) {
+        cgltf_mesh* mesh = &data->meshes[i];
+        for (cgltf_size j = 0; j < mesh->primitives_count; ++j) {
+            cgltf_primitive* primitive = &mesh->primitives[j];
+
+            if (primitive->type != cgltf_primitive_type_triangles) {
+                continue; // Skip non-triangle primitives
+            }
+
+            std::vector<float> vertices;
+            std::vector<unsigned int> indices;
+
+            // Load Indices
+            const cgltf_accessor* index_accessor = primitive->indices;
+            indices.resize(index_accessor->count);
+            for (cgltf_size k = 0; k < index_accessor->count; ++k) {
+                indices[k] = cgltf_accessor_read_index(index_accessor, k);
+            }
+
+            // Load Vertices
+            for (cgltf_size k = 0; k < primitive->attributes_count; ++k) {
+                cgltf_attribute* attribute = &primitive->attributes[k];
+                const cgltf_accessor* accessor = attribute->data;
+
+                if (vertices.empty()) {
+                    vertices.resize(accessor->count * 8, 0.0f); // 8 floats: pos, normal, uv
+                }
+
+                if (attribute->type == cgltf_attribute_type_position) {
+                    for (cgltf_size l = 0; l < accessor->count; ++l) {
+                        cgltf_accessor_read_float(accessor, l, &vertices[l * 8], 3);
+                    }
+                } else if (attribute->type == cgltf_attribute_type_normal) {
+                    for (cgltf_size l = 0; l < accessor->count; ++l) {
+                        cgltf_accessor_read_float(accessor, l, &vertices[l * 8 + 3], 3);
+                    }
+                } else if (attribute->type == cgltf_attribute_type_texcoord) {
+                    for (cgltf_size l = 0; l < accessor->count; ++l) {
+                         cgltf_accessor_read_float(accessor, l, &vertices[l * 8 + 6], 2);
+                    }
+                }
+            }
+
+            if (!vertices.empty() && !indices.empty()) {
+                std::string mesh_path = path + "_" + std::to_string(i) + "_" + std::to_string(j);
+
+                // **การเปลี่ยนแปลงสำคัญ**: เราไม่ได้ใช้ m_resourceManager.load อีกต่อไป
+                // แต่เราเรียกใช้ `resourceManager` ที่ถูกส่งเข้ามาเพื่อ "สร้าง" Resource โดยตรง
+                auto new_mesh = resourceManager.load<Mesh>(mesh_path, vertices, indices);
+
+                const cgltf_material* material = primitive->material;
+                if (material && material->has_pbr_metallic_roughness) {
+                    // --- LOGGING START ---
+                    std::cout << "GLTF_IMPORTER::DEBUG: Processing material '" << (material->name ? material->name : "N/A") << "' for mesh " << i << ", primitive " << j << std::endl;
+                    // --- LOGGING END ---
+                    const cgltf_texture_view& base_color_texture = material->pbr_metallic_roughness.base_color_texture;
+                    if (base_color_texture.texture && base_color_texture.texture->image) {
+                        const char* uri = base_color_texture.texture->image->uri;
+                        if (uri && strlen(uri) > 0) {
+                            std::string base_path = path.substr(0, path.find_last_of("/\\") + 1);
+                            std::string texture_path = base_path + uri;
+                            std::cout << "GLTF_IMPORTER::DEBUG: Found texture URI, loading: " << texture_path << std::endl;
+                            new_mesh->setTexture(resourceManager.load<Texture>(texture_path));
+
+                         } else if (base_color_texture.texture->image->buffer_view) {
+                            // --- จัดการกับ Embedded Texture ---
+                            cgltf_buffer_view* buffer_view = base_color_texture.texture->image->buffer_view;
+                            const unsigned char* buffer_data = static_cast<const unsigned char*>(buffer_view->buffer->data) + buffer_view->offset;
+                            cgltf_size buffer_size = buffer_view->size;
+
+                            std::cout << "GLTF_IMPORTER::DEBUG: Found embedded texture, decoding from memory." << std::endl;
+
+                            // สร้าง Path ที่ไม่ซ้ำกันสำหรับ Resource Manager
+                            std::string embedded_path = path + "_embedded_tex_" + std::to_string(i) + "_" + std::to_string(j);
+                            new_mesh->setTexture(resourceManager.load<Texture>(embedded_path, buffer_data, buffer_size));
+                        }
+                    }
+                }
+                meshes.push_back(new_mesh);
+            }
+        }
+    }
+
+    // เพิ่ม Log ตรงนี้เพื่อดูจำนวน Mesh ที่ประมวลผล
+    std::cout << "GltfImporter: Processed " << meshes.size() << " meshes from file: " << path << std::endl;
+    cgltf_free(data);
+
+    // --- ส่วนที่แก้ไข ---
+    if (!meshes.empty()) {
+        // ลงทะเบียน Mesh ตัวแรกด้วย path ดั้งเดิมของไฟล์ glb
+        // เพื่อให้ ResourceManager::load หาเจอในครั้งแรก
+        resourceManager.add(path, meshes[0]);
+    }
+    // คืนค่า true ก็ต่อเมื่อเราโหลด Mesh ได้อย่างน้อย 1 ชิ้น
+    return !meshes.empty();
+    // --- สิ้นสุดส่วนที่แก้ไข ---
+}
+    // --- Factory Function ---
     extern "C" __declspec(dllexport) IPlugin* createPlugin(Engine& engine) {
+        // สร้าง instance ของคลาสที่รวมร่างแล้ว
         return new GltfImporterPlugin(engine);
     }
+
 } // namespace AEngine

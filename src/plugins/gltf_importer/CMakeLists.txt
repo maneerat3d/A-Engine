@@ -1,7 +1,6 @@
 # src/plugins/gltf_importer/CMakeLists.txt
 
 add_library(gltf_importer_plugin
-    gltf_importer.cpp
     gltf_importer_plugin.cpp
 )
 
