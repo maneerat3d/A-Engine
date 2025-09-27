@@ -15,6 +15,8 @@ public:
     ~Editor();
 
     void run();
+    void setIsRunning(bool running) { m_is_running = running; }
+    bool isRunning() const { return m_is_running; }
 
 private:
     void init();

@@ -42,7 +42,7 @@ void EditorUI::drawMenuBarItems() {
             }
         }
         if (ImGui::MenuItem("Exit")) {
-            // m_editor.requestExit(); 
+            m_editor.setIsRunning(false);
         }
         ImGui::EndMenu();
     }

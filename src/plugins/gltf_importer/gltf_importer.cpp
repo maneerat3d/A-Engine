@@ -7,12 +7,9 @@
 #define CGLTF_IMPLEMENTATION
 #include <cgltf.h>
 #include <vector>
-
 #include <iostream>
-#include <stdexcept>
 
 namespace AEngine {
-
 
 bool GltfImporter::load(const std::string& path, ResourceManager& resourceManager)
 {
@@ -21,7 +18,7 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
     cgltf_result result = cgltf_parse_file(&options, path.c_str(), &data);
 
     if (result != cgltf_result_success) {
-        std::cerr << "ERROR::GLTF_IMPORTER::COULD_NOT_LOAD: " << path << std::endl;
+        std::cerr << "ERROR::GLTF_IMPORTER::COULD_NOT_PARSE_FILE: " << path << std::endl;
         return false;
     }
 
@@ -32,11 +29,9 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
         return false;
     }
 
-    // --- LOGGING START ---
-    std::cout << "GLTF_IMPORTER::INFO: Loading file: " << path << std::endl;
-    std::cout << "GLTF_IMPORTER::INFO: Found " << data->materials_count << " materials." << std::endl;
-    std::cout << "GLTF_IMPORTER::INFO: Found " << data->textures_count << " textures." << std::endl;
-    // --- LOGGING END ---
+    std::cout << "GltfImporter: Loading file: " << path
+              << " (" << data->materials_count << " materials, "
+              << data->textures_count << " textures)" << std::endl;
 
     std::vector<std::shared_ptr<Mesh>> meshes;
 
@@ -46,96 +41,89 @@ bool GltfImporter::load(const std::string& path, ResourceManager& resourceManage
             cgltf_primitive* primitive = &mesh->primitives[j];
 
             if (primitive->type != cgltf_primitive_type_triangles) {
-                continue; // Skip non-triangle primitives
+                continue; // ข้าม Primitive ที่ไม่ใช่สามเหลี่ยม
             }
 
-            std::vector<float> vertices;
-            std::vector<unsigned int> indices;
-
-            // Load Indices
+            // --- Load Indices ---
             const cgltf_accessor* index_accessor = primitive->indices;
-            indices.resize(index_accessor->count);
+            std::vector<unsigned int> indices(index_accessor->count);
             for (cgltf_size k = 0; k < index_accessor->count; ++k) {
                 indices[k] = cgltf_accessor_read_index(index_accessor, k);
             }
 
-            // Load Vertices
+            // --- Load Vertex Attributes ---
+            std::vector<float> vertices;
+            
+            // **ส่วนที่ปรับปรุง**: สร้าง Helper lambda เพื่อลดความซ้ำซ้อนในการอ่านข้อมูล Attribute
+            auto read_attribute = [&](const cgltf_accessor* accessor, int offset, int components) {
+                for (cgltf_size l = 0; l < accessor->count; ++l) {
+                    cgltf_accessor_read_float(accessor, l, &vertices[l * 8 + offset], components);
+                }
+            };
+
             for (cgltf_size k = 0; k < primitive->attributes_count; ++k) {
-                cgltf_attribute* attribute = &primitive->attributes[k];
+                const cgltf_attribute* attribute = &primitive->attributes[k];
                 const cgltf_accessor* accessor = attribute->data;
 
                 if (vertices.empty()) {
-                    vertices.resize(accessor->count * 8, 0.0f); // 8 floats: pos, normal, uv
+                    // 8 floats per vertex: pos(3), normal(3), uv(2)
+                    vertices.resize(accessor->count * 8, 0.0f);
                 }
 
                 if (attribute->type == cgltf_attribute_type_position) {
-                    for (cgltf_size l = 0; l < accessor->count; ++l) {
-                        cgltf_accessor_read_float(accessor, l, &vertices[l * 8], 3);
-                    }
+                    read_attribute(accessor, 0, 3); // Offset 0, 3 components
                 } else if (attribute->type == cgltf_attribute_type_normal) {
-                    for (cgltf_size l = 0; l < accessor->count; ++l) {
-                        cgltf_accessor_read_float(accessor, l, &vertices[l * 8 + 3], 3);
-                    }
+                    read_attribute(accessor, 3, 3); // Offset 3, 3 components
                 } else if (attribute->type == cgltf_attribute_type_texcoord) {
-                    for (cgltf_size l = 0; l < accessor->count; ++l) {
-                         cgltf_accessor_read_float(accessor, l, &vertices[l * 8 + 6], 2);
-                    }
+                    read_attribute(accessor, 6, 2); // Offset 6, 2 components
                 }
             }
 
-            if (!vertices.empty() && !indices.empty()) {
-                std::string mesh_path = path + "_" + std::to_string(i) + "_" + std::to_string(j);
+            if (vertices.empty() || indices.empty()) continue;
 
-                // **การเปลี่ยนแปลงสำคัญ**: เราไม่ได้ใช้ m_resourceManager.load อีกต่อไป
-                // แต่เราเรียกใช้ `resourceManager` ที่ถูกส่งเข้ามาเพื่อ "สร้าง" Resource โดยตรง
-                auto new_mesh = resourceManager.load<Mesh>(mesh_path, vertices, indices);
+            std::string mesh_path = path + "_" + std::to_string(i) + "_" + std::to_string(j);
+            auto new_mesh = resourceManager.load<Mesh>(mesh_path, vertices, indices);
 
-                const cgltf_material* material = primitive->material;
-                if (material && material->has_pbr_metallic_roughness) {
-                    // --- LOGGING START ---
-                    std::cout << "GLTF_IMPORTER::DEBUG: Processing material '" << (material->name ? material->name : "N/A") << "' for mesh " << i << ", primitive " << j << std::endl;
-                    // --- LOGGING END ---
-                    const cgltf_texture_view& base_color_texture = material->pbr_metallic_roughness.base_color_texture;
-                    if (base_color_texture.texture && base_color_texture.texture->image) {
-                        const char* uri = base_color_texture.texture->image->uri;
-                        if (uri && strlen(uri) > 0) {
-                            std::string base_path = path.substr(0, path.find_last_of("/\\") + 1);
-                            std::string texture_path = base_path + uri;
-                            std::cout << "GLTF_IMPORTER::DEBUG: Found texture URI, loading: " << texture_path << std::endl;
-                            new_mesh->setTexture(resourceManager.load<Texture>(texture_path));
+            // --- Load Material and Textures ---
+            const cgltf_material* material = primitive->material;
+            if (material && material->has_pbr_metallic_roughness) {
+                const cgltf_texture_view& base_color_texture = material->pbr_metallic_roughness.base_color_texture;
+                if (base_color_texture.texture && base_color_texture.texture->image) {
+                     const cgltf_image* image = base_color_texture.texture->image;
+                     
+                     // Case 1: Texture from URI (external file)
+                     if (image->uri && strlen(image->uri) > 0) {
+                        std::string base_path = path.substr(0, path.find_last_of("/\\") + 1);
+                        std::string texture_path = base_path + image->uri;
+                        new_mesh->setTexture(resourceManager.load<Texture>(texture_path));
+                        std::cout << "GltfImporter: Loading linked texture: " << texture_path << std::endl;
 
-                         } else if (base_color_texture.texture->image->buffer_view) {
-                            // --- จัดการกับ Embedded Texture ---
-                            cgltf_buffer_view* buffer_view = base_color_texture.texture->image->buffer_view;
-                            const unsigned char* buffer_data = static_cast<const unsigned char*>(buffer_view->buffer->data) + buffer_view->offset;
-                            cgltf_size buffer_size = buffer_view->size;
+                     // Case 2: Embedded Texture (from buffer)
+                     } else if (image->buffer_view) {
+                        cgltf_buffer_view* buffer_view = image->buffer_view;
+                        const auto* buffer_data = static_cast<const unsigned char*>(buffer_view->buffer->data) + buffer_view->offset;
+                        cgltf_size buffer_size = buffer_view->size;
 
-                            std::cout << "GLTF_IMPORTER::DEBUG: Found embedded texture, decoding from memory." << std::endl;
-
-                            // สร้าง Path ที่ไม่ซ้ำกันสำหรับ Resource Manager
-                            std::string embedded_path = path + "_embedded_tex_" + std::to_string(i) + "_" + std::to_string(j);
-                            new_mesh->setTexture(resourceManager.load<Texture>(embedded_path, buffer_data, buffer_size));
-                        }
+                        std::string embedded_path = path + "_embedded_tex_" + std::to_string(i) + "_" + std::to_string(j);
+                        new_mesh->setTexture(resourceManager.load<Texture>(embedded_path, buffer_data, buffer_size));
+                        std::cout << "GltfImporter: Loading embedded texture from buffer." << std::endl;
                     }
                 }
-                meshes.push_back(new_mesh);
             }
+            meshes.push_back(new_mesh);
         }
     }
 
-    // เพิ่ม Log ตรงนี้เพื่อดูจำนวน Mesh ที่ประมวลผล
     std::cout << "GltfImporter: Processed " << meshes.size() << " meshes from file: " << path << std::endl;
     cgltf_free(data);
 
-    // --- ส่วนที่แก้ไข ---
     if (!meshes.empty()) {
-        // ลงทะเบียน Mesh ตัวแรกด้วย path ดั้งเดิมของไฟล์ glb
-        // เพื่อให้ ResourceManager::load หาเจอในครั้งแรก
+        // ลงทะเบียน Mesh ชิ้นแรกด้วย path ของไฟล์ glb/gltf ดั้งเดิม
+        // เพื่อให้การเรียก ResourceManager::load(path) ครั้งแรกหาเจอง่าย
         resourceManager.add(path, meshes[0]);
     }
-    // คืนค่า true ก็ต่อเมื่อเราโหลด Mesh ได้อย่างน้อย 1 ชิ้น
+
     return !meshes.empty();
-    // --- สิ้นสุดส่วนที่แก้ไข ---
 }
 
 } // namespace AEngine

@@ -10,6 +10,7 @@ public:
     {
         Texture,
         Mesh,
+        Sound
     };
     Resource(ResourceManager& owner, const std::string& path)
         : m_owner(owner), m_path(path) {}

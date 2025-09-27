@@ -15,8 +15,7 @@ target_include_directories(gltf_importer_plugin PUBLIC
 
 # Link library ที่จำเป็นสำหรับ plugin นี้
 target_link_libraries(gltf_importer_plugin PRIVATE
-    aengine_core      # <--- แก้ไขจาก core
-    aengine_renderer  # <--- แก้ไขจาก renderer
+    aengine_core
+    aengine_renderer
     cgltf
 )
-

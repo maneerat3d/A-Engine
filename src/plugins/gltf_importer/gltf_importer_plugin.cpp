@@ -2,44 +2,42 @@
 #include "gltf_importer.h"
 #include "engine/engine.h"
 #include "core/resource/resource_manager.h"
-#include "core/container/array.h"
 #include "core/memory/unique_ptr.h"
 #include <iostream>
 
 namespace AEngine {
     // PImpl (Pointer to implementation) idiom
-    // struct นี้จะถูกซ่อนไว้ในไฟล์ .cpp เท่านั้น
+    // ซ่อนรายละเอียดการ implement ไว้ในไฟล์ .cpp
     struct GltfImporterPluginImpl {
-        Array<UniquePtr<IResourceImporter>> m_importer;
-        GltfImporterPluginImpl(IAllocator& allocator) : m_importer(allocator) {}
+        // **ส่วนที่ปรับปรุง**: เปลี่ยนจาก Array<UniquePtr<...>> มาเป็น UniquePtr ตัวเดียว
+        // เพราะ Plugin นี้จัดการ Importer แค่ประเภทเดียว ทำให้โค้ดง่ายลง
+        UniquePtr<IResourceImporter> m_importer;
     };
-}
-
-namespace AEngine {
 
     GltfImporterPlugin::GltfImporterPlugin(Engine& engine)
         : m_engine(engine)
     {
-        // สร้าง implementation object ใน constructor
-        m_pimpl = AENGINE_NEW(engine.getAllocator(), GltfImporterPluginImpl)(engine.getAllocator());
+        // สร้าง implementation object
+        m_pimpl = AENGINE_NEW(engine.getAllocator(), GltfImporterPluginImpl)();
     }
 
     GltfImporterPlugin::~GltfImporterPlugin() {
-        // ทำลาย implementation object ใน destructor เพื่อป้องกัน memory leak
+        // ทำลาย implementation object เพื่อป้องกัน memory leak
         AENGINE_DELETE(m_engine.getAllocator(), m_pimpl);
     }
 
     void GltfImporterPlugin::createSystems(Engine& engine) {
-         std::cout << "GltfImporterPlugin CREATED and registering importer..." << std::endl;
-        auto gltf_importer = UniquePtr<GltfImporter>::create(engine.getAllocator());
+        std::cout << "GltfImporterPlugin: Creating and registering importer..." << std::endl;
+        
+        // **ส่วนที่ปรับปรุง**: สร้าง Importer และให้ PImpl จัดการ Ownership โดยตรง
+        m_pimpl->m_importer = UniquePtr<GltfImporter>::create(engine.getAllocator());
 
         ResourceManager* manager = engine.getSubsystem<ResourceManager>();
         if (manager) {
-            manager->registerImporter({".gltf", ".glb"}, gltf_importer.get());
+            // ลงทะเบียน Importer โดยส่ง Raw Pointer ไปให้ Manager
+            // Ownership ของ Importer ยังคงอยู่ที่ Plugin (m_pimpl)
+            manager->registerImporter({".gltf", ".glb"}, m_pimpl->m_importer.get());
         }
-
-        // เข้าถึง member ผ่าน pointer
-        m_pimpl->m_importer.push(std::move(gltf_importer));
     }
  
     extern "C" __declspec(dllexport) IPlugin* createPlugin(Engine& engine) {

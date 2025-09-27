@@ -4,6 +4,8 @@ add_executable(aengine_main main.cpp)
 # Link Executable เข้ากับ Library ทั้งหมดที่ต้องใช้
 # การเพิ่ม plugin library ทั้งหมดเข้ามาตรงนี้ คือการแก้ปัญหา Linker Error
 target_link_libraries(aengine_main 
+    PUBLIC
+        aengine_core
     PRIVATE
         aengine_editor    
         aengine_engine
@@ -15,6 +17,7 @@ target_link_libraries(aengine_main
         opengl32
         imgui
 )
+
 
 # --- การตั้งค่าสำหรับ GLAD (เพื่อให้ main.cpp ใช้งานได้) ---
 
@@ -28,6 +31,10 @@ target_sources(aengine_main
 target_include_directories(aengine_main
     PRIVATE
         ${CMAKE_SOURCE_DIR}/external/glad/include
+)
+
+target_include_directories(aengine_main PRIVATE 
+    "${CMAKE_SOURCE_DIR}/src"
 )
 
 # --- ขั้นตอน Post-Build สำหรับคัดลอกไฟล์ที่จำเป็น ---

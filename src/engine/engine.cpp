@@ -1,9 +1,9 @@
 #include "engine.h"
 
 // ... includes subsystems ...
-#include "core/plugin/iplugin.h" // <--- เพิ่ม
-#include "core/ecs/isystem.h"    // <--- เพิ่ม
-#include "core/world/world.h"      // <--- เพิ่ม
+#include "core/plugin/iplugin.h" 
+#include "core/ecs/isystem.h"    
+#include "core/world/world.h"      
 
 // --- Include Plugins ---
 #include "renderer/renderer_plugin.h"
@@ -11,13 +11,13 @@
 #include "game_plugin.h"
 
 #include "core/subsystem/isubsystem.h"
-#include "platform/platform_subsystem.h" // <--- Include Subsystem ใหม่
+#include "platform/platform_subsystem.h" 
 #include "core/resource/resource_manager.h"
-#include "core/world/world_manager.h" // <--- Include Subsystem ใหม่
+#include "core/world/world_manager.h" 
 #include "core/memory/unique_ptr.h"
 
 #include <iostream>
-#include <SDL.h> // ยังต้องใช้สำหรับ SDL_GetTicks()
+#include <SDL.h> 
 
 namespace AEngine {
 

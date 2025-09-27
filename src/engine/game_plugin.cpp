@@ -32,7 +32,6 @@ void GamePlugin::createSystems(Engine& engine) {
         if (!world) return;
 
         // การโหลด Resource ยังคงเหมือนเดิม แต่เราได้ ResourceManager มาจากวิธีใหม่
-        //auto mainMeshResource = resourceManager->load<Mesh>("models/monkey.glb");
         auto allMonkeyMeshes = resourceManager->findAll<Mesh>("models/monkey.glb");
 
         if (!allMonkeyMeshes.empty()) {

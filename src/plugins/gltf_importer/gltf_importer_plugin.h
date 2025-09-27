@@ -12,15 +12,14 @@ namespace AEngine {
         explicit GltfImporterPlugin(Engine& engine);
         ~GltfImporterPlugin() override;
 
-        // --- IPlugin Interface (ฉบับแก้ไขให้ถูกต้อง) ---
         const char* getName() const override { return "gltf_importer"; }
 
         void createSystems(Engine& engine) override;
-        void destroySystems(Engine& engine) override { /* ทำตามสัญญา แต่ไม่ต้องทำอะไร */ }
+        void destroySystems(Engine& engine) override { /* ไม่ต้องทำอะไร */ }
         
     private:
         Engine& m_engine;
-        GltfImporterPluginImpl* m_pimpl; // เปลี่ยนเป็น Pointer
+        GltfImporterPluginImpl* m_pimpl; // Pointer to implementation
     };
 
 } // namespace AEngine
